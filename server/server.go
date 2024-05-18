@@ -198,7 +198,14 @@ func nameDecoder(usernames []string) (string, error) {
 	}
 
 	for _, v := range usernames {
+		v = strings.TrimSuffix(v, "\n")
+
 		_, err := nameList.WriteString(names[v])
+		if err != nil {
+			return err.Error(), err
+		}
+
+		_, err = nameList.WriteString(", ")
 		if err != nil {
 			return err.Error(), err
 		}
