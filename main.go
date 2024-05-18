@@ -8,7 +8,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/go-co-op/gocron/v2"
-	"github.com/gorcon/rcon"
 	"github.com/lpernett/godotenv"
 
 	"DiscordMinecraftHelper/commands"
@@ -17,7 +16,6 @@ import (
 
 var GuildID string
 var BotToken string
-var Conn *rcon.Conn
 
 var s *discordgo.Session
 

@@ -147,7 +147,7 @@ func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate) 
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("Server Address: %v", address),
+					Content: fmt.Sprintf("Server Address: %v:25565", address),
 				},
 			})
 		}
