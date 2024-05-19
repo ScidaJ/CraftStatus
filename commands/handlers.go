@@ -20,7 +20,6 @@ func PlayerListHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				Content: "Server not running.",
 			},
 		})
-		notifyAdmin(s, i.ChannelID)
 		return
 	}
 
@@ -82,7 +81,7 @@ func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate) 
 }
 
 func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	conn, err := botrcon.RconConnect()
+	conn, _ := botrcon.RconConnect()
 	if conn != nil {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -94,18 +93,6 @@ func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	if err != nil {
-		log.Printf("Error starting server: %v", err)
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "Unable to start server.",
-			},
-		})
-		notifyAdmin(s, i.ChannelID)
-		return
-	}
-
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
@@ -113,7 +100,7 @@ func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	})
 
-	err = botrcon.StartServer()
+	err := botrcon.StartServer()
 
 	if err != nil {
 		log.Printf("Error starting server: %v", err)

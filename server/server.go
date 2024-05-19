@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -73,6 +72,8 @@ func ListPlayers() (string, error) {
 		log.Print(err)
 		return err.Error(), err
 	}
+
+	defer conn.Close()
 
 	response, err := conn.Execute("/list")
 	if err != nil {
@@ -142,8 +143,10 @@ func ServerRunning() bool {
 	}
 
 	if err != nil {
+		log.Println("Server Not Running")
 		return false
 	}
+
 	return true
 }
 
@@ -154,13 +157,8 @@ func StartServer() error {
 			log.Fatal("Error loading .env file")
 		}
 
-		serverPath, err := filepath.Abs(os.Getenv("START_SERVER_PATH"))
+		serverPath := os.Getenv("START_SERVER_PATH")
 		log.Println(serverPath)
-
-		if err != nil {
-			log.Printf("Unable to start server: %v", err)
-			return err
-		}
 
 		log.Println("Starting server")
 
