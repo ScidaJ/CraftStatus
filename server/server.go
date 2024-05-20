@@ -3,7 +3,7 @@ package botrcon
 import (
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/exec"
@@ -15,29 +15,34 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func DailyRestart() {
-	if ServerRunning() {
-		conn, err := RconConnect()
+type Server struct {
+	Logger *slog.Logger
+}
+
+func (s Server) DailyRestart() {
+	s.Logger.Info("daily server restart")
+	if s.ServerRunning() {
+		conn, err := s.RconConnect()
 		if err != nil {
 			return
 		}
 
-		RestartServer(conn)
+		s.RestartServer(conn)
 	} else {
-		StartServer()
+		s.StartServer()
 	}
 }
 
-func GetPlayerCount() (int, error) {
-	conn, err := RconConnect()
+func (s Server) GetPlayerCount() (int, error) {
+	conn, err := s.RconConnect()
 	if err != nil {
-		log.Print(err)
+		s.Logger.Warn("error connecting to server", "error", err)
 		return 0, err
 	}
 
 	response, err := conn.Execute("/list")
 	if err != nil {
-		log.Print(err)
+		s.Logger.Warn("error executing /list", "error", err)
 		return 0, err
 	}
 
@@ -50,26 +55,26 @@ func GetPlayerCount() (int, error) {
 }
 
 // This assumes that the bot is running on the same machine as the server. Would not be needed if hosted on dedicated server.
-func GetServerAddress() string {
+func (s Server) GetServerAddress() string {
 	ipService := "https://api.ipify.org"
 	resp, err := http.Get(ipService)
 	if err != nil {
-		log.Printf("Unable to get server address: %v", err)
+		s.Logger.Warn("error getting server address", "error", err)
 		return ""
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalln(err)
+		s.Logger.Error("error reading response", "error", err)
 	}
 
 	return string(body)
 }
 
-func ListPlayers() (string, error) {
-	conn, err := RconConnect()
+func (s Server) ListPlayers() (string, error) {
+	conn, err := s.RconConnect()
 	if err != nil {
-		log.Print(err)
+		s.Logger.Warn("error connecting to server", "error", err)
 		return err.Error(), err
 	}
 
@@ -77,7 +82,7 @@ func ListPlayers() (string, error) {
 
 	response, err := conn.Execute("/list")
 	if err != nil {
-		log.Print(err)
+		s.Logger.Warn("error executing /list", "error", err)
 		return err.Error(), err
 	}
 
@@ -87,7 +92,7 @@ func ListPlayers() (string, error) {
 	usernameList := strings.Split(responseRight, ",")
 	usernames, err := nameDecoder(usernameList)
 	if err != nil {
-		log.Println("Error listing players")
+		s.Logger.Warn("error extracting player list", "error", err)
 		return err.Error(), err
 	}
 
@@ -98,10 +103,10 @@ func ListPlayers() (string, error) {
 	}
 }
 
-func RconConnect() (*rcon.Conn, error) {
+func (s Server) RconConnect() (*rcon.Conn, error) {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		s.Logger.Error("error loading .env file", "error", err)
 	}
 
 	rconAddress := os.Getenv("RCON_ADDRESS")
@@ -109,14 +114,15 @@ func RconConnect() (*rcon.Conn, error) {
 
 	conn, err := rcon.Dial(rconAddress, rconPassword)
 	if err != nil {
-		log.Println("Error connecting to server")
+		s.Logger.Warn("error connecting to server", "error", err)
 		return nil, err
 	}
 
 	return conn, nil
 }
 
-func RestartServer(conn *rcon.Conn) error {
+func (s Server) RestartServer(conn *rcon.Conn) error {
+	s.Logger.Info("restarting server")
 	time.Sleep(10 * time.Second)
 
 	conn.Execute("/stop")
@@ -125,7 +131,7 @@ func RestartServer(conn *rcon.Conn) error {
 	for i := 0; i < 10; i++ {
 		time.Sleep(30 * time.Second)
 
-		_, err := RconConnect()
+		_, err := s.RconConnect()
 
 		if err == nil {
 			return nil
@@ -135,46 +141,47 @@ func RestartServer(conn *rcon.Conn) error {
 	return nil
 }
 
-func ServerRunning() bool {
-	conn, err := RconConnect()
+func (s Server) ServerRunning() bool {
+	conn, err := s.RconConnect()
+
+	if err != nil {
+		return false
+	}
+
+	defer conn.Close()
 
 	if conn != nil {
 		return true
 	}
 
-	if err != nil {
-		log.Println("Server Not Running")
-		return false
-	}
-
 	return true
 }
 
-func StartServer() error {
-	if !ServerRunning() {
+func (s Server) StartServer() error {
+	if !s.ServerRunning() {
 		err := godotenv.Load()
 		if err != nil {
-			log.Fatal("Error loading .env file")
+			s.Logger.Error("error loading .env file", "error", err)
 		}
 
 		serverPath := os.Getenv("START_SERVER_PATH")
-		log.Println(serverPath)
 
-		log.Println("Starting server")
+		s.Logger.Info("starting server")
 
 		c := exec.Command("cmd.exe", "/C", "Start", serverPath)
 		err = c.Start()
 
 		if err != nil {
-			log.Printf("Unable to start server: %v", err)
+			s.Logger.Warn("unable to start server", "error", err)
 			return err
 		}
 
 		time.Sleep(2 * time.Minute)
 
-		conn, err := RconConnect()
+		conn, err := s.RconConnect()
 
 		if err != nil {
+			s.Logger.Warn("unable to start server", "error", err)
 			return err
 		}
 		conn.Close()

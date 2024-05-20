@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"time"
@@ -18,105 +18,65 @@ var GuildID string
 var BotToken string
 
 var s *discordgo.Session
+var Logger *slog.Logger
 
-func init() {
-	err := botrcon.StartServer()
+func main() {
+	// Logger init
+	Logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	slog.SetDefault(Logger)
+	Logger.Info("hello, world")
 
-	if err != nil {
-		log.Printf("Unable to start server %v", err)
-	}
-}
-
-func init() {
+	// .env init
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		Logger.Error("error loading .env file", "error", err)
 	}
 
 	GuildID = os.Getenv("GUILD_ID")
 	BotToken = os.Getenv("BOT_TOKEN")
-}
 
-func init() {
-	var err error
+	// Bot init
 	s, err = discordgo.New("Bot " + BotToken)
 	if err != nil {
-		log.Fatalf("Invalid bot parameters: %v", err)
+		Logger.Error("error creating bot", "error", err)
 	}
-}
 
-func main() {
+	server := botrcon.Server{
+		Logger: Logger,
+	}
+
+	err = server.StartServer()
+	if err != nil {
+		Logger.Warn("error starting server", "error", err)
+	}
+
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
-		log.Printf("Logged in as %v#%v", s.State.User.Username, s.State.User.Discriminator)
+		Logger.Info("successfully logged in", "user", s.State.User.Username)
 	})
 
-	err := s.Open()
+	err = s.Open()
 	if err != nil {
-		log.Fatalf("Cannot open the session: %v", err)
+		Logger.Error("error opening Discord session", "error", err)
 	}
 
-	addCommandHandlers(s)
+	addCommandHandlers(s, server)
 	registerCommands()
 
 	defer s.Close()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
-	log.Println("Press Ctrl+C to exit")
+	Logger.Info("press Ctrl+C to exit")
 
 	c, err := gocron.NewScheduler(gocron.WithLocation(time.Local))
 	if err != nil {
 		c.Shutdown()
-		log.Fatalf("Cron scheduler failed to start %v", err)
+		Logger.Error("error starting cron scheduler", "error", err)
 	}
 
-	c.NewJob(
-		gocron.DailyJob(
-			1,
-			gocron.NewAtTimes(
-				gocron.NewAtTime(2, 0, 0),
-			),
-		),
-		gocron.NewTask(
-			func() { botrcon.DailyRestart() },
-		),
-	)
-	c.NewJob(
-		gocron.DailyJob(
-			1,
-			gocron.NewAtTimes(
-				gocron.NewAtTime(1, 55, 0),
-			),
-		),
-		gocron.NewTask(
-			func() {
-				conn, err := botrcon.RconConnect()
-				if err != nil {
-					return
-				} else {
-					conn.Execute("/say Server will restart in 5 minutes")
-				}
-			},
-		),
-	)
-	c.NewJob(
-		gocron.DailyJob(
-			1,
-			gocron.NewAtTimes(
-				gocron.NewAtTime(1, 30, 0),
-			),
-		),
-		gocron.NewTask(
-			func() {
-				conn, err := botrcon.RconConnect()
-				if err != nil {
-					return
-				} else {
-					conn.Execute("/say Server will restart in 30 minutes")
-				}
-			},
-		),
-	)
+	addCronJobs(c, server)
 
 	c.Start()
 
@@ -197,20 +157,21 @@ func main() {
 
 	//statusTicker.Stop()
 
-	log.Println("Removing commands...")
+	Logger.Info("removing commands")
+
 	registeredCommands, err := s.ApplicationCommands(s.State.User.ID, GuildID)
 	if err != nil {
-		log.Fatalf("Could not fetch registered commands: %v", err)
+		Logger.Error("error fetching commands", "error", err)
 	}
 
 	for _, v := range registeredCommands {
 		err := s.ApplicationCommandDelete(s.State.User.ID, GuildID, v.ID)
 		if err != nil {
-			log.Panicf("Cannot delete '%v' command: %v", v.Name, err)
+			Logger.Error("error deleting command", "command", v.Name, "error", err)
 		}
 	}
 
-	log.Println("Gracefully shutting down.")
+	Logger.Info("gracefully shutting down")
 }
 
 func registerCommands() []*discordgo.ApplicationCommand {
@@ -228,7 +189,7 @@ func registerCommands() []*discordgo.ApplicationCommand {
 		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, GuildID, cmd)
 
 		if err != nil {
-			log.Fatalf("error adding command %v\n%v", v.Name, err)
+			Logger.Error("error adding command", "command", v.Name, "error", err)
 		}
 		registeredCommands[i] = cmd
 	}
@@ -236,11 +197,62 @@ func registerCommands() []*discordgo.ApplicationCommand {
 	return registeredCommands
 }
 
-func addCommandHandlers(s *discordgo.Session) {
+func addCommandHandlers(s *discordgo.Session, server botrcon.Server) {
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		commandHandlers := commands.GetCommandsHandlers()
+		Logger.Info("command received", "command", i.ApplicationCommandData().Name, "user", i.Member.User.GlobalName)
 		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-			h(s, i)
+			h(s, i, server)
 		}
 	})
+}
+
+func addCronJobs(c gocron.Scheduler, server botrcon.Server) {
+	c.NewJob(
+		gocron.DailyJob(
+			1,
+			gocron.NewAtTimes(
+				gocron.NewAtTime(2, 0, 0),
+			),
+		),
+		gocron.NewTask(
+			func() { server.DailyRestart() },
+		),
+	)
+	c.NewJob(
+		gocron.DailyJob(
+			1,
+			gocron.NewAtTimes(
+				gocron.NewAtTime(1, 55, 0),
+			),
+		),
+		gocron.NewTask(
+			func() {
+				conn, err := server.RconConnect()
+				if err != nil {
+					return
+				} else {
+					conn.Execute("/say Server will restart in 5 minutes")
+				}
+			},
+		),
+	)
+	c.NewJob(
+		gocron.DailyJob(
+			1,
+			gocron.NewAtTimes(
+				gocron.NewAtTime(1, 30, 0),
+			),
+		),
+		gocron.NewTask(
+			func() {
+				conn, err := server.RconConnect()
+				if err != nil {
+					return
+				} else {
+					conn.Execute("/say Server will restart in 30 minutes")
+				}
+			},
+		),
+	)
 }

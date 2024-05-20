@@ -3,17 +3,15 @@ package commands
 import (
 	botrcon "DiscordMinecraftHelper/server"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 )
 
-func PlayerListHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-
-	if !botrcon.ServerRunning() {
-		log.Println("Server not running.")
+func PlayerListHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
+	if !g.ServerRunning() {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
@@ -23,23 +21,27 @@ func PlayerListHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	response, err := botrcon.ListPlayers()
+	response, err := g.ListPlayers()
 	if err != nil {
-		log.Println(discordgo.ErrCodeActionRequiredVerifiedAccount)
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: err.Error(),
+			},
+		})
+	} else {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: response,
+			},
+		})
 	}
-
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: response,
-		},
-	})
 }
 
-func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	conn, err := botrcon.RconConnect()
+func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
+	conn, err := g.RconConnect()
 	if err != nil {
-		log.Printf("Error restarting server: %v", err)
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
@@ -52,7 +54,6 @@ func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate) 
 
 	_, err = conn.Execute("/say The server will restart in 10 seconds")
 	if err != nil {
-		log.Printf("Error restarting server: %v", err)
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
@@ -68,7 +69,7 @@ func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate) 
 				Content: "Restarting server in 10 seconds. Please wait at least 5 minutes before attempting to restart the server again. If something went wrong then I'll notify the admin.",
 			},
 		})
-		err = botrcon.RestartServer(conn)
+		err = g.RestartServer(conn)
 
 		if err != nil {
 			notifyAdmin(s, i.ChannelID)
@@ -80,8 +81,8 @@ func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate) 
 	}
 }
 
-func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	conn, _ := botrcon.RconConnect()
+func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
+	conn, _ := g.RconConnect()
 	if conn != nil {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -100,17 +101,16 @@ func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	})
 
-	err := botrcon.StartServer()
+	err := g.StartServer()
 
 	if err != nil {
-		log.Printf("Error starting server: %v", err)
 		notifyAdmin(s, i.ChannelID)
 		return
 	}
 }
 
-func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	conn, err := botrcon.RconConnect()
+func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
+	conn, err := g.RconConnect()
 	if err != nil {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -121,7 +121,7 @@ func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate) 
 	} else {
 		conn.Close()
 
-		address := botrcon.GetServerAddress()
+		address := g.GetServerAddress()
 
 		if len(address) == 0 {
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -144,10 +144,10 @@ func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate) 
 func notifyAdmin(s *discordgo.Session, c string) {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		slog.Error("error notifying admin", "error", err)
 	}
 
 	admin := os.Getenv("ADMIN")
 
-	s.ChannelMessageSend(c, fmt.Sprintf("@%v There is a problem with the server.", admin))
+	s.ChannelMessageSend(c, fmt.Sprintf("<@%v> There is a problem with the server.", admin))
 }

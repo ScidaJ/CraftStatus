@@ -1,6 +1,8 @@
 package commands
 
 import (
+	botrcon "DiscordMinecraftHelper/server"
+
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -11,7 +13,7 @@ type (
 		Options     []*discordgo.ApplicationCommandOption
 	}
 
-	HandleFunc func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	HandleFunc func(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server)
 )
 
 var (
