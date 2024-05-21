@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -80,82 +81,57 @@ func main() {
 
 	c.Start()
 
-	// statusTicker := time.NewTicker(10 * time.Second)
-	// go func(s *discordgo.Session, guildID string) {
-	// 	for {
-	// 		select {
-	// 		case <-statusTicker.C:
-	// 			userID := "Test User ID"
-	// 			precense, err := s.State.Presence(guildID, userID)
-
-	// 			if err != nil {
-	// 				log.Println("Error")
-	// 				log.Println(err)
-	// 			}
-
-	// 			log.Println(precense)
-	// 			log.Println("Trying to update status")
-	// 			playerCount, _ := botrcon.GetPlayerCount()
-	// 			if botrcon.ServerRunning() {
-	// 				activity := discordgo.Activity{
-	// 					Name:    "All the Mods 9",
-	// 					Type:    discordgo.ActivityTypeWatching,
-	// 					State:   "Online",
-	// 					Details: fmt.Sprintf("%v player(s) online!", playerCount),
-	// 				}
-	// 				presence := discordgo.Presence{
-	// 					User:   s.State.User,
-	// 					Status: discordgo.StatusOnline,
-	// 					Activities: []*discordgo.Activity{
-	// 						&activity,
-	// 					},
-	// 					ClientStatus: discordgo.ClientStatus{
-	// 						Desktop: discordgo.StatusOnline,
-	// 						Mobile:  discordgo.StatusOnline,
-	// 						Web:     discordgo.StatusOnline,
-	// 					},
-	// 				}
-
-	// 				err = s.State.PresenceAdd(guildID, &presence)
-	// 				if err != nil {
-	// 					log.Println(err)
-	// 				}
-	// 			} else {
-	// 				activity := discordgo.Activity{
-	// 					Name:    "All the Mods 9",
-	// 					Type:    discordgo.ActivityTypeWatching,
-	// 					State:   "Offline",
-	// 					Details: "No players online.",
-	// 				}
-	// 				presence := discordgo.Presence{
-	// 					User:   s.State.User,
-	// 					Status: discordgo.StatusOnline,
-	// 					Activities: []*discordgo.Activity{
-	// 						&activity,
-	// 					},
-	// 					ClientStatus: discordgo.ClientStatus{
-	// 						Desktop: discordgo.StatusOnline,
-	// 						Mobile:  discordgo.StatusOnline,
-	// 						Web:     discordgo.StatusOnline,
-	// 					},
-	// 				}
-
-	// 				err = s.State.PresenceAdd(guildID, &presence)
-	// 				if err != nil {
-	// 					log.Println(err)
-	// 				}
-	// 			}
-	// 		case <-stop:
-	// 			return
-	// 		}
-	// 	}
-	// }(s, GuildID)
+	statusTicker := time.NewTicker(10 * time.Minute)
+	go func(s *discordgo.Session, guildID string, server botrcon.Server) {
+		for {
+			select {
+			case <-statusTicker.C:
+				Logger.Info("trying to update status")
+				playerCount, _ := server.GetPlayerCount()
+				if server.ServerRunning() {
+					activity := discordgo.Activity{
+						Name:    fmt.Sprintf("Players: %v online", playerCount),
+						Type:    discordgo.ActivityTypeWatching,
+						State:   "Online",
+						Details: fmt.Sprintf("%v player(s) online!", playerCount),
+					}
+					presence := discordgo.UpdateStatusData{
+						Activities: []*discordgo.Activity{
+							&activity,
+						},
+						Status: string(discordgo.StatusOnline),
+						AFK:    false,
+					}
+					s.UpdateStatusComplex(presence)
+				} else {
+					activity := discordgo.Activity{
+						Name:    "Server offline",
+						Type:    discordgo.ActivityTypeWatching,
+						State:   "Online",
+						Details: "Server offline",
+					}
+					presence := discordgo.UpdateStatusData{
+						Activities: []*discordgo.Activity{
+							&activity,
+						},
+						Status: string(discordgo.StatusOnline),
+						AFK:    false,
+					}
+					s.UpdateStatusComplex(presence)
+				}
+			case <-stop:
+				return
+			}
+		}
+	}(s, GuildID, server)
 
 	<-stop
 
 	c.Shutdown()
 
-	//statusTicker.Stop()
+	Logger.Info("stopping statusTicker")
+
+	statusTicker.Stop()
 
 	Logger.Info("removing commands")
 
