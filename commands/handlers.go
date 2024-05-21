@@ -69,14 +69,13 @@ func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, 
 				Content: "Restarting server in 10 seconds. Please wait at least 5 minutes before attempting to restart the server again. If something went wrong then I'll notify the admin.",
 			},
 		})
-		err = g.RestartServer(conn)
 
+		err = g.RestartServer(conn)
 		if err != nil {
 			notifyAdmin(s, i.ChannelID)
 		}
 
 		conn.Close()
-
 		s.ChannelMessageSend(i.ChannelID, "Server has restarted.")
 	}
 }
@@ -102,7 +101,6 @@ func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g 
 	})
 
 	err := g.StartServer()
-
 	if err != nil {
 		notifyAdmin(s, i.ChannelID)
 		return
@@ -120,9 +118,7 @@ func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		})
 	} else {
 		conn.Close()
-
 		address := g.GetServerAddress()
-
 		if len(address) == 0 {
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -148,6 +144,5 @@ func notifyAdmin(s *discordgo.Session, c string) {
 	}
 
 	admin := os.Getenv("ADMIN")
-
 	s.ChannelMessageSend(c, fmt.Sprintf("<@%v> There is a problem with the server.", admin))
 }

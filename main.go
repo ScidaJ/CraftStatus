@@ -48,11 +48,6 @@ func main() {
 		Logger: Logger,
 	}
 
-	err = server.StartServer()
-	if err != nil {
-		Logger.Warn("error starting server", "error", err)
-	}
-
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		Logger.Info("successfully logged in", "user", s.State.User.Username)
 	})
@@ -86,7 +81,7 @@ func main() {
 		for {
 			select {
 			case <-statusTicker.C:
-				Logger.Info("trying to update status")
+				Logger.Info("updating status")
 				playerCount, _ := server.GetPlayerCount()
 				if server.ServerRunning() {
 					activity := discordgo.Activity{
