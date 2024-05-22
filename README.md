@@ -21,7 +21,7 @@ and you're good to go!
 
 1. Clone this repo ```git clone git@github.com:ScidaJ/DiscordMinecraftHelper.git```
 2. CD into the new directory ```cd DiscordMinecraftHelper```
-3. Install dependencies ```go mod install```
+3. Install dependencies ```go mod download```
 4. Make a copy of `.env.sample` and fill in the required values
 5. Run the bot with ```go run main.go```
 
