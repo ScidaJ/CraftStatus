@@ -64,6 +64,18 @@ func (s Server) GetPlayerCount() (int, error) {
 // This assumes that the bot is running on the same machine as the server. Would not be needed if hosted on dedicated server.
 func (s Server) GetServerAddress() string {
 	sLogger := s.Logger.With("process", "get_server_address")
+
+	err := godotenv.Load()
+	if err != nil {
+		sLogger.Error("error loading .env file", "error", err)
+	}
+
+	sAddress := os.Getenv("SERVER_ADDRESS")
+
+	if sAddress != "" {
+		return sAddress
+	}
+
 	ipService := "https://api.ipify.org"
 	resp, err := http.Get(ipService)
 	if err != nil {
