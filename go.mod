@@ -4,13 +4,12 @@ go 1.22.3
 
 require (
 	github.com/bwmarrin/discordgo v0.28.1
+	github.com/go-co-op/gocron/v2 v2.5.0
 	github.com/gorcon/rcon v1.3.5
 	github.com/joho/godotenv v1.5.1
-	github.com/lpernett/godotenv v0.0.0-20230527005122-0de1d4c5ef5e
 )
 
 require (
-	github.com/go-co-op/gocron/v2 v2.5.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/jonboulle/clockwork v0.4.0 // indirect

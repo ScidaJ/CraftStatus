@@ -8,7 +8,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/go-co-op/gocron/v2"
-	"github.com/lpernett/godotenv"
+	"github.com/joho/godotenv"
 
 	"DiscordMinecraftHelper/bot"
 	"DiscordMinecraftHelper/commands"
