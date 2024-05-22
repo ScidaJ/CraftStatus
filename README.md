@@ -19,11 +19,11 @@ and you're good to go!
 
 ## Installing
 
-1. Clone this repo `git clone git@github.com:ScidaJ/DiscordMinecraftHelper.git`
-2. CD into the new directory `cd DiscordMinecraftHelper`
-3. Install dependencies `go mod install`
+1. Clone this repo ```git clone git@github.com:ScidaJ/DiscordMinecraftHelper.git```
+2. CD into the new directory ```cd DiscordMinecraftHelper```
+3. Install dependencies ```go mod install```
 4. Make a copy of `.env.sample` and fill in the required values
-5. Run the bot with `go run main.go`
+5. Run the bot with ```go run main.go```
 
 ## Everything Else
 
@@ -42,6 +42,6 @@ After the previous step head over to the `OAuth2` category on the sidebar, then 
 * Text Permissions
   * Send Messages
   * Manage Messages
-  * Read MMessage History
+  * Read Message History
 
 Select these in the `Bot Permissions` panel, then copy the `Generated URL` below and paste it in a new tab. From here select the server that you wish to add the bot to, and confirm. When you launch the bot your application should appear in the sidebar.
