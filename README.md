@@ -44,4 +44,4 @@ After the previous step head over to the `OAuth2` category on the sidebar, then 
   * Manage Messages
   * Read Message History
 
-Select these in the `Bot Permissions` panel, then copy the `Generated URL` below and paste it in a new tab. From here select the server that you wish to add the bot to, and confirm. When you launch the bot your application should appear in the sidebar.
+Select these in the `Bot Permissions` panel, then copy the `Generated URL` below and paste it in a new tab. From here select the server that you wish to add the bot to, and confirm. When you launch the bot with the associated server ID your application should appear in the sidebar.
