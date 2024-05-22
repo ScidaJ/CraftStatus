@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -11,6 +10,7 @@ import (
 	"github.com/go-co-op/gocron/v2"
 	"github.com/lpernett/godotenv"
 
+	"DiscordMinecraftHelper/bot"
 	"DiscordMinecraftHelper/commands"
 	botrcon "DiscordMinecraftHelper/server"
 )
@@ -57,8 +57,8 @@ func main() {
 		Logger.Error("error opening Discord session", "error", err)
 	}
 
-	addCommandHandlers(s, server)
-	registerCommands()
+	commands.AddCommandHandlers(s, server, Logger.With("process", "bot"))
+	commands.RegisterCommands(s, GuildID, Logger.With("process", "bot"))
 
 	defer s.Close()
 
@@ -72,7 +72,7 @@ func main() {
 		Logger.Error("error starting cron scheduler", "error", err)
 	}
 
-	addCronJobs(c, server)
+	bot.AddCronJobs(c, server, Logger.With("process", "cron_job"))
 
 	c.Start()
 
@@ -81,14 +81,14 @@ func main() {
 		for {
 			select {
 			case <-statusTicker.C:
-				updateStatus(s, server)
+				bot.UpdateBotStatus(s, server, Logger)
 			case <-stop:
 				return
 			}
 		}
 	}(s, server)
 
-	updateStatus(s, server)
+	bot.UpdateBotStatus(s, server, Logger)
 
 	<-stop
 
@@ -113,123 +113,4 @@ func main() {
 	}
 
 	Logger.Info("gracefully shutting down")
-}
-
-func registerCommands() []*discordgo.ApplicationCommand {
-
-	commands := commands.GetCommands()
-
-	registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
-
-	for i, v := range commands {
-		cmd := &discordgo.ApplicationCommand{
-			Name:        v.Name,
-			Description: v.Description,
-			Options:     v.Options,
-		}
-		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, GuildID, cmd)
-
-		if err != nil {
-			Logger.Error("error adding command", "command", v.Name, "error", err)
-		}
-		registeredCommands[i] = cmd
-	}
-
-	return registeredCommands
-}
-
-func addCommandHandlers(s *discordgo.Session, server botrcon.Server) {
-	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		commandHandlers := commands.GetCommandsHandlers()
-		Logger.Info("command received", "command", i.ApplicationCommandData().Name, "user", i.Member.User.GlobalName)
-		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-			h(s, i, server)
-		}
-	})
-}
-
-func addCronJobs(c gocron.Scheduler, server botrcon.Server) {
-	c.NewJob(
-		gocron.DailyJob(
-			1,
-			gocron.NewAtTimes(
-				gocron.NewAtTime(2, 0, 0),
-			),
-		),
-		gocron.NewTask(
-			func() { server.DailyRestart() },
-		),
-	)
-	c.NewJob(
-		gocron.DailyJob(
-			1,
-			gocron.NewAtTimes(
-				gocron.NewAtTime(1, 55, 0),
-			),
-		),
-		gocron.NewTask(
-			func() {
-				conn, err := server.RconConnect()
-				if err != nil {
-					return
-				} else {
-					conn.Execute("/say Server will restart in 5 minutes")
-				}
-			},
-		),
-	)
-	c.NewJob(
-		gocron.DailyJob(
-			1,
-			gocron.NewAtTimes(
-				gocron.NewAtTime(1, 30, 0),
-			),
-		),
-		gocron.NewTask(
-			func() {
-				conn, err := server.RconConnect()
-				if err != nil {
-					return
-				} else {
-					conn.Execute("/say Server will restart in 30 minutes")
-				}
-			},
-		),
-	)
-}
-
-func updateStatus(s *discordgo.Session, server botrcon.Server) {
-	Logger.Info("updating status")
-	playerCount, _ := server.GetPlayerCount()
-	if server.ServerRunning() {
-		activity := discordgo.Activity{
-			Name:    fmt.Sprintf("Players: %v online", playerCount),
-			Type:    discordgo.ActivityTypeWatching,
-			State:   "Online",
-			Details: fmt.Sprintf("%v player(s) online!", playerCount),
-		}
-		presence := discordgo.UpdateStatusData{
-			Activities: []*discordgo.Activity{
-				&activity,
-			},
-			Status: string(discordgo.StatusOnline),
-			AFK:    false,
-		}
-		s.UpdateStatusComplex(presence)
-	} else {
-		activity := discordgo.Activity{
-			Name:    "Server offline",
-			Type:    discordgo.ActivityTypeWatching,
-			State:   "Online",
-			Details: "Server offline",
-		}
-		presence := discordgo.UpdateStatusData{
-			Activities: []*discordgo.Activity{
-				&activity,
-			},
-			Status: string(discordgo.StatusOnline),
-			AFK:    false,
-		}
-		s.UpdateStatusComplex(presence)
-	}
 }

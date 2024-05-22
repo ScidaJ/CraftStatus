@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"DiscordMinecraftHelper/bot"
 	botrcon "DiscordMinecraftHelper/server"
 	"fmt"
 	"log/slog"
@@ -40,6 +41,8 @@ func PlayerListHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g b
 }
 
 func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
+	bot.UpdateBotStatus(s, g, g.Logger.With("process", "bot_status"))
+
 	conn, err := g.RconConnect()
 	if err != nil {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -61,7 +64,6 @@ func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, 
 			},
 		})
 		notifyAdmin(s, i.ChannelID)
-		return
 	} else {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -78,9 +80,11 @@ func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		conn.Close()
 		s.ChannelMessageSend(i.ChannelID, "Server has restarted.")
 	}
+	bot.UpdateBotStatus(s, g, g.Logger.With("process", "bot_status"))
 }
 
 func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
+	bot.UpdateBotStatus(s, g, g.Logger.With("process", "bot_status"))
 	conn, _ := g.RconConnect()
 	if conn != nil {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -103,8 +107,8 @@ func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g 
 	err := g.StartServer()
 	if err != nil {
 		notifyAdmin(s, i.ChannelID)
-		return
 	}
+	bot.UpdateBotStatus(s, g, g.Logger.With("process", "bot_status"))
 }
 
 func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
