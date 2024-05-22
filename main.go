@@ -77,48 +77,18 @@ func main() {
 	c.Start()
 
 	statusTicker := time.NewTicker(10 * time.Minute)
-	go func(s *discordgo.Session, guildID string, server botrcon.Server) {
+	go func(s *discordgo.Session, server botrcon.Server) {
 		for {
 			select {
 			case <-statusTicker.C:
-				Logger.Info("updating status")
-				playerCount, _ := server.GetPlayerCount()
-				if server.ServerRunning() {
-					activity := discordgo.Activity{
-						Name:    fmt.Sprintf("Players: %v online", playerCount),
-						Type:    discordgo.ActivityTypeWatching,
-						State:   "Online",
-						Details: fmt.Sprintf("%v player(s) online!", playerCount),
-					}
-					presence := discordgo.UpdateStatusData{
-						Activities: []*discordgo.Activity{
-							&activity,
-						},
-						Status: string(discordgo.StatusOnline),
-						AFK:    false,
-					}
-					s.UpdateStatusComplex(presence)
-				} else {
-					activity := discordgo.Activity{
-						Name:    "Server offline",
-						Type:    discordgo.ActivityTypeWatching,
-						State:   "Online",
-						Details: "Server offline",
-					}
-					presence := discordgo.UpdateStatusData{
-						Activities: []*discordgo.Activity{
-							&activity,
-						},
-						Status: string(discordgo.StatusOnline),
-						AFK:    false,
-					}
-					s.UpdateStatusComplex(presence)
-				}
+				updateStatus(s, server)
 			case <-stop:
 				return
 			}
 		}
-	}(s, GuildID, server)
+	}(s, server)
+
+	updateStatus(s, server)
 
 	<-stop
 
@@ -226,4 +196,40 @@ func addCronJobs(c gocron.Scheduler, server botrcon.Server) {
 			},
 		),
 	)
+}
+
+func updateStatus(s *discordgo.Session, server botrcon.Server) {
+	Logger.Info("updating status")
+	playerCount, _ := server.GetPlayerCount()
+	if server.ServerRunning() {
+		activity := discordgo.Activity{
+			Name:    fmt.Sprintf("Players: %v online", playerCount),
+			Type:    discordgo.ActivityTypeWatching,
+			State:   "Online",
+			Details: fmt.Sprintf("%v player(s) online!", playerCount),
+		}
+		presence := discordgo.UpdateStatusData{
+			Activities: []*discordgo.Activity{
+				&activity,
+			},
+			Status: string(discordgo.StatusOnline),
+			AFK:    false,
+		}
+		s.UpdateStatusComplex(presence)
+	} else {
+		activity := discordgo.Activity{
+			Name:    "Server offline",
+			Type:    discordgo.ActivityTypeWatching,
+			State:   "Online",
+			Details: "Server offline",
+		}
+		presence := discordgo.UpdateStatusData{
+			Activities: []*discordgo.Activity{
+				&activity,
+			},
+			Status: string(discordgo.StatusOnline),
+			AFK:    false,
+		}
+		s.UpdateStatusComplex(presence)
+	}
 }
