@@ -26,7 +26,7 @@ and you're good to go!
 1. Clone this repo ```git clone git@github.com:ScidaJ/DiscordMinecraftHelper.git```
 2. CD into the new directory ```cd DiscordMinecraftHelper```
 3. Install dependencies ```go mod download```
-4. Make a copy of `.env.sample` and rename to `.env`. The varaibles in that file are explained [further on.](###.env)
+4. Make a copy of `.env.sample` and rename to `.env`. The varaibles in that file are explained [further on.](#.env)
 
 ## Everything Else
 
@@ -49,6 +49,7 @@ After the previous step head over to the `OAuth2` category on the sidebar, then 
 
 Select these in the `Bot Permissions` panel, then copy the `Generated URL` below and paste it in a new tab. From here select the server that you wish to add the bot to, and confirm. When you launch the bot with the associated server ID your application should appear in the sidebar.
 
+<a id=".env"></a>
 ### .env
 
 This will be a quick overview of the variables in the `.env` file.
