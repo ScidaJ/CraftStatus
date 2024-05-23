@@ -112,32 +112,30 @@ func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g 
 }
 
 func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
+	message := ""
 	conn, err := g.RconConnect()
 	if err != nil {
+		message += "The server is not running. "
+	} else {
+		conn.Close()
+	}
+	address := g.GetServerAddress()
+	if len(address) == 0 {
+		message += "Error retrieving server address. Service may be down."
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: "Server not running.",
+				Content: message,
 			},
 		})
 	} else {
-		conn.Close()
-		address := g.GetServerAddress()
-		if len(address) == 0 {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "Error retrieving server address. Service may be down.",
-				},
-			})
-		} else {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("Server Address: %v:25565", address),
-				},
-			})
-		}
+		message += fmt.Sprintf("Server Address: %v:25565", address)
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: message,
+			},
+		})
 	}
 }
 
