@@ -34,7 +34,7 @@ This requires making an application with Discord on the Discord Developer Portal
 
 ### Bot Token
 
-Once you have created your application for the bot to work with, look on the sidebar for the `Bot` category, as that is where we'll find our `Bot Token`. Once on the Bot page, click the `Reset Token` button under the `Username` field. Copy this token and place it in your .env file.
+Once you have created your application for the bot to work with, look on the sidebar for the `Bot` category, as that is where we'll find our `Bot Token`. Once on the Bot page, click the `Reset Token` button under the `Username` field. Copy this token and place it in your `.env` file.
 
 ### Permissions
 
