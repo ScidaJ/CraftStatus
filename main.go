@@ -38,6 +38,11 @@ func main() {
 	GuildID = os.Getenv("GUILD_ID")
 	BotToken = os.Getenv("BOT_TOKEN")
 
+	playerList, err := botrcon.LoadPlayerList(Logger)
+	if err != nil {
+		Logger.Warn("error loading PLAYER_LIST", err)
+	}
+
 	// Bot init
 	s, err = discordgo.New("Bot " + BotToken)
 	if err != nil {
@@ -45,7 +50,8 @@ func main() {
 	}
 
 	server := botrcon.Server{
-		Logger: Logger,
+		Logger:  Logger,
+		Players: playerList,
 	}
 
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {

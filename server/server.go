@@ -16,7 +16,8 @@ import (
 )
 
 type Server struct {
-	Logger *slog.Logger
+	Logger  *slog.Logger
+	Players map[string]string
 }
 
 func (s Server) DailyRestart() {
@@ -111,7 +112,7 @@ func (s Server) ListPlayers() (string, error) {
 	responseLeft := strings.Split(responses[0], " ")
 	responseRight := strings.ReplaceAll(responses[1], " ", "")
 	usernameList := strings.Split(responseRight, ",")
-	usernames, err := nameDecoder(usernameList)
+	usernames, err := s.nameDecoder(usernameList)
 	if err != nil {
 		sLogger.Warn("error extracting player list", "error", err)
 		return err.Error(), err
@@ -122,6 +123,28 @@ func (s Server) ListPlayers() (string, error) {
 	} else {
 		return fmt.Sprintf("There are %s player(s) online, %s", responseLeft[2], usernames), nil
 	}
+}
+
+func LoadPlayerList(l *slog.Logger) (map[string]string, error) {
+	l = l.With("process", "load_player_list")
+
+	playerList := map[string]string{}
+
+	err := godotenv.Load()
+	if err != nil {
+		l.Error("error loading .env file", "error", err)
+		return playerList, err
+	}
+
+	playersString := os.Getenv("PLAYER_LIST")
+	playersSlice := strings.Split(playersString, ",")
+
+	for _, v := range playersSlice {
+		player := strings.Split(v, ":")
+		playerList[player[0]] = player[1]
+	}
+
+	return playerList, err
 }
 
 func (s Server) RconConnect() (*rcon.Conn, error) {
@@ -203,7 +226,7 @@ func (s Server) StartServer() error {
 			return err
 		}
 
-		time.Sleep(2 * time.Minute)
+		time.Sleep(5 * time.Minute)
 
 		conn, err := s.RconConnect()
 		if err != nil {
@@ -217,25 +240,26 @@ func (s Server) StartServer() error {
 	return nil
 }
 
-func nameDecoder(usernames []string) (string, error) {
+func (s Server) nameDecoder(usernameList []string) (string, error) {
 	var nameList strings.Builder
-	names := map[string]string{
-		"Beamsword":       "Kurt",
-		"burgerdude9":     "Sean",
-		"Rob1729":         "Rob",
-		"ShermanTWilliam": "Nik",
-		"ThatGuyinPJs":    "Jacob",
-	}
 
-	for _, v := range usernames {
+	for _, v := range usernameList {
 		v = strings.TrimSuffix(v, "\n")
 
-		_, err := nameList.WriteString(names[v])
-		if err != nil {
-			return err.Error(), err
+		playerName, ok := s.Players[v]
+		if !ok {
+			_, err := nameList.WriteString(v)
+			if err != nil {
+				return err.Error(), err
+			}
+		} else {
+			_, err := nameList.WriteString(playerName)
+			if err != nil {
+				return err.Error(), err
+			}
 		}
 
-		_, err = nameList.WriteString(", ")
+		_, err := nameList.WriteString(", ")
 		if err != nil {
 			return err.Error(), err
 		}

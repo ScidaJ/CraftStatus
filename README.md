@@ -61,3 +61,4 @@ This will be a quick overview of the variables in the `.env` file.
 * `ADMIN` - The User ID of the "Admin" user for the bot/server. They will be pinged if there is an issue with the server.
 * `START_SERVER_PATH` The path to your `startserver.bat` file, needed for `/start-server` and `/restart-server` commands, as well as the auto-restarting.
 * `SERVER_ADDRESS` Optional. The `/server-address` command just returns the IP of the host machine, as this bot is assuming that the server and bot are running on the same machine. If this variable is filled in then it will instead return this value.
+* `PLAYER_LIST` Optional. For use with `/player-list` command. If value is provided in the formal of `[InGameName1:Nickname1,InGameName2:Nickname2,InGameName3:Nickname3]` then it will replace the in game name with the provided nickname in the list. If no nickname is provided then it will print the in game name instead.
