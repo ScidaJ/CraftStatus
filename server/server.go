@@ -1,6 +1,7 @@
 package botrcon
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -44,7 +45,6 @@ func (s Server) GetPlayerCount() (int, error) {
 	sLogger := s.Logger.With("process", "get_player_count")
 	conn, err := s.RconConnect()
 	if err != nil {
-		sLogger.Warn("error connecting to server", "error", err)
 		return 0, err
 	}
 
@@ -96,7 +96,6 @@ func (s Server) ListPlayers() (string, error) {
 	sLogger := s.Logger.With("process", "get_player_count")
 	conn, err := s.RconConnect()
 	if err != nil {
-		sLogger.Warn("error connecting to server", "error", err)
 		return err.Error(), err
 	}
 
@@ -159,8 +158,7 @@ func (s Server) RconConnect() (*rcon.Conn, error) {
 
 	conn, err := rcon.Dial(rconAddress, rconPassword)
 	if err != nil {
-		sLogger.Warn("error connecting to server", "error", err)
-		return nil, err
+		return nil, errors.New("server offline")
 	}
 
 	return conn, nil

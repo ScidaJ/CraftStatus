@@ -12,6 +12,7 @@ import (
 )
 
 func PlayerListHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
+	g.Logger = g.Logger.With("command", "list")
 	if !g.ServerRunning() {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -41,9 +42,21 @@ func PlayerListHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g b
 }
 
 func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
-	bot.UpdateBotStatus(s, g, g.Logger.With("process", "bot_status"))
+	g.Logger = g.Logger.With("command", "restart")
+	bot.UpdateBotStatus(s, g, g.Logger)
 
 	conn, err := g.RconConnect()
+	if err.Error() == "server offline" {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Server is offline. Attempting to start server.",
+			},
+		})
+		StartServerHandler(s, i, g)
+		return
+	}
+
 	if err != nil {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -80,11 +93,13 @@ func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		conn.Close()
 		s.ChannelMessageSend(i.ChannelID, "Server has restarted.")
 	}
-	bot.UpdateBotStatus(s, g, g.Logger.With("process", "bot_status"))
+	bot.UpdateBotStatus(s, g, g.Logger)
 }
 
 func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
-	bot.UpdateBotStatus(s, g, g.Logger.With("process", "bot_status"))
+	g.Logger = g.Logger.With("command", "start")
+	bot.UpdateBotStatus(s, g, g.Logger)
+
 	conn, _ := g.RconConnect()
 	if conn != nil {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -108,11 +123,14 @@ func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g 
 	if err != nil {
 		notifyAdmin(s, i.ChannelID)
 	}
-	bot.UpdateBotStatus(s, g, g.Logger.With("process", "bot_status"))
+	s.ChannelMessageSend(i.ChannelID, "Server has started.")
+	bot.UpdateBotStatus(s, g, g.Logger)
 }
 
 func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
+	g.Logger = g.Logger.With("command", "address")
 	message := ""
+
 	conn, err := g.RconConnect()
 	if err != nil {
 		message += "The server is not running. "
@@ -128,6 +146,7 @@ func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate, 
 				Content: message,
 			},
 		})
+		g.Logger.Warn("error", err)
 	} else {
 		message += fmt.Sprintf("Server Address: %v:25565", address)
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{

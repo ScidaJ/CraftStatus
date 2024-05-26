@@ -63,8 +63,8 @@ func main() {
 		Logger.Error("error opening Discord session", "error", err)
 	}
 
-	commands.AddCommandHandlers(s, server, Logger.With("process", "bot"))
-	commands.RegisterCommands(s, GuildID, Logger.With("process", "bot"))
+	commands.AddCommandHandlers(s, server, Logger)
+	commands.RegisterCommands(s, GuildID, Logger)
 
 	defer s.Close()
 

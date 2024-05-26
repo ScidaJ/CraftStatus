@@ -60,7 +60,6 @@ func AddCronJobs(c gocron.Scheduler, server botrcon.Server, logger *slog.Logger)
 }
 
 func UpdateBotStatus(s *discordgo.Session, server botrcon.Server, logger *slog.Logger) {
-	logger.Info("updating status")
 	playerCount, _ := server.GetPlayerCount()
 	if server.ServerRunning() {
 		activity := discordgo.Activity{
@@ -76,12 +75,13 @@ func UpdateBotStatus(s *discordgo.Session, server botrcon.Server, logger *slog.L
 			Status: string(discordgo.StatusOnline),
 			AFK:    false,
 		}
+		logger.Info("updating status", "status", "online")
 		s.UpdateStatusComplex(presence)
 	} else {
 		activity := discordgo.Activity{
 			Name:    "Server offline",
 			Type:    discordgo.ActivityTypeWatching,
-			State:   "Online",
+			State:   "Offline",
 			Details: "Server offline",
 		}
 		presence := discordgo.UpdateStatusData{
@@ -91,6 +91,7 @@ func UpdateBotStatus(s *discordgo.Session, server botrcon.Server, logger *slog.L
 			Status: string(discordgo.StatusOnline),
 			AFK:    false,
 		}
+		logger.Info("updating status", "status", "offline")
 		s.UpdateStatusComplex(presence)
 	}
 }
