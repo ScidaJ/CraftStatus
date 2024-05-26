@@ -60,5 +60,14 @@ This will be a quick overview of the variables in the `.env` file.
 * `RCON_PASSWORD` - This is set in your `server.properties` file or similar.
 * `ADMIN` - The User ID of the "Admin" user for the bot/server. They will be pinged if there is an issue with the server.
 * `START_SERVER_PATH` The path to your `startserver.bat` file, needed for `/start-server` and `/restart-server` commands, as well as the auto-restarting.
-* `SERVER_ADDRESS` Optional. The `/server-address` command just returns the IP of the host machine, as this bot is assuming that the server and bot are running on the same machine. If this variable is filled in then it will instead return this value.
-* `PLAYER_LIST` Optional. For use with `/player-list` command. If value is provided in the format of `[InGameName1:Nickname1,InGameName2:Nickname2,InGameName3:Nickname3]` then it will replace the in game name with the provided nickname in the list. If no nickname is provided then it will print the in game name instead.
+* `SERVER_ADDRESS` Optional. The `/address` command just returns the IP of the host machine, as this bot is assuming that the server and bot are running on the same machine. If this variable is filled in then it will instead return this value.
+* `PLAYER_LIST` Optional. For use with `/list` command. If value is provided in the format of `[InGameName1:Nickname1,InGameName2:Nickname2,InGameName3:Nickname3]` then it will replace the in game name with the provided nickname in the list. If no nickname is provided then it will print the in game name instead.
+
+## Commands
+
+The bot only has four commands as it is fairly simple in scope. They are listed below
+
+* `/address` Prints out the address of the server. As the bot assumes that the server is running on the same machine it will return the IP of the host machine. **If you do not want this to be the case then fill in the `SERVER_ADDRESS` variable in the `.env` file. It will print that value instead.**
+* `/list` List the players currently on the server. If the `.env` variable `PLAYER_LIST` is populated the bot will replace any matching usernames with the corresponding nickname.
+* `/restart` Sends the `/stop` command to the server. When paired with the batch script given above the server will restart after 10 seconds.
+* `/start` Starts the server by executing the given batch file in `START_SERVER_PATH`
