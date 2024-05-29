@@ -6,19 +6,17 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gorcon/rcon"
-	"github.com/joho/godotenv"
 )
 
 type Server struct {
-	Logger  *slog.Logger
-	Players map[string]string
+	Logger *slog.Logger
+	Env    ServerEnv
 }
 
 func (s Server) DailyRestart() {
@@ -66,15 +64,8 @@ func (s Server) GetPlayerCount() (int, error) {
 func (s Server) GetServerAddress() string {
 	sLogger := s.Logger.With("function", "get_server_address")
 
-	err := godotenv.Load()
-	if err != nil {
-		sLogger.Error("error loading .env file", "error", err)
-	}
-
-	sAddress := os.Getenv("SERVER_ADDRESS")
-
-	if sAddress != "" {
-		return sAddress
+	if s.Env.SERVER_ADDRESS != "" {
+		return s.Env.SERVER_ADDRESS
 	}
 
 	ipService := "https://api.ipify.org"
@@ -125,39 +116,8 @@ func (s Server) ListPlayers() (string, error) {
 	}
 }
 
-func LoadPlayerList(l *slog.Logger) (map[string]string, error) {
-	l = l.With("function", "load_player_list")
-
-	playerList := map[string]string{}
-
-	err := godotenv.Load()
-	if err != nil {
-		l.Error("error loading .env file", "error", err)
-		return playerList, err
-	}
-
-	playersString := os.Getenv("PLAYER_LIST")
-	playersSlice := strings.Split(playersString, ",")
-
-	for _, v := range playersSlice {
-		player := strings.Split(v, ":")
-		playerList[player[0]] = player[1]
-	}
-
-	return playerList, err
-}
-
 func (s Server) RconConnect() (*rcon.Conn, error) {
-	sLogger := s.Logger.With("function", "rcon_connect")
-	err := godotenv.Load()
-	if err != nil {
-		sLogger.Error("error loading .env file", "error", err)
-	}
-
-	rconAddress := os.Getenv("RCON_ADDRESS")
-	rconPassword := os.Getenv("RCON_PASSWORD")
-
-	conn, err := rcon.Dial(rconAddress, rconPassword)
+	conn, err := rcon.Dial(s.Env.RCON_ADDRESS, s.Env.RCON_PASSWORD)
 	if err != nil {
 		return nil, errors.New("server offline")
 	}
@@ -212,14 +172,8 @@ func (s Server) ServerRunning() bool {
 func (s Server) StartServer() error {
 	sLogger := s.Logger.With("function", "start_server")
 	if !s.ServerRunning() {
-		err := godotenv.Load()
-		if err != nil {
-			sLogger.Error("error loading .env file", "error", err)
-		}
-
-		serverPath := os.Getenv("START_SERVER_PATH")
-		c := exec.Command("cmd.exe", "/C", "Start", serverPath)
-		err = c.Start()
+		c := exec.Command("cmd.exe", "/C", "Start", s.Env.START_SERVER_PATH)
+		err := c.Start()
 		if err != nil {
 			sLogger.Warn("unable to start server", "error", err)
 			return err
@@ -245,7 +199,7 @@ func (s Server) nameDecoder(usernameList []string) (string, error) {
 	for _, v := range usernameList {
 		v = strings.TrimSuffix(v, "\n")
 
-		playerName, ok := s.Players[v]
+		playerName, ok := s.Env.PLAYER_LIST[v]
 		if !ok {
 			_, err := nameList.WriteString(v)
 			if err != nil {

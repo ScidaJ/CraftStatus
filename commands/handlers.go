@@ -4,11 +4,9 @@ import (
 	"DiscordMinecraftHelper/bot"
 	botrcon "DiscordMinecraftHelper/server"
 	"fmt"
-	"log/slog"
 	"os"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/joho/godotenv"
 )
 
 func PlayerListHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
@@ -159,11 +157,11 @@ func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate, 
 }
 
 func notifyAdmin(s *discordgo.Session, c string) {
-	err := godotenv.Load()
-	if err != nil {
-		slog.Error("error notifying admin", "error", err)
+	admin, ok := os.LookupEnv("ADMIN")
+	if !ok {
+		s.ChannelMessageSend(c, "There is a problem with the server.")
+		return
 	}
 
-	admin := os.Getenv("ADMIN")
 	s.ChannelMessageSend(c, fmt.Sprintf("<@%v> There is a problem with the server.", admin))
 }
