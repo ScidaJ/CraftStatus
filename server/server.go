@@ -22,7 +22,7 @@ type Server struct {
 }
 
 func (s Server) DailyRestart() {
-	sLogger := s.Logger.With("process", "daily_restart")
+	sLogger := s.Logger.With("function", "daily_restart")
 	if s.ServerRunning() {
 		conn, err := s.RconConnect()
 		if err != nil {
@@ -31,7 +31,7 @@ func (s Server) DailyRestart() {
 
 		err = s.RestartServer(conn)
 		if err != nil {
-			sLogger.Warn("error restarting server", "process", "daily_restart", "error", err)
+			sLogger.Warn("error restarting server", "error", err)
 		}
 	} else {
 		err := s.StartServer()
@@ -42,7 +42,7 @@ func (s Server) DailyRestart() {
 }
 
 func (s Server) GetPlayerCount() (int, error) {
-	sLogger := s.Logger.With("process", "get_player_count")
+	sLogger := s.Logger.With("function", "get_player_count")
 	conn, err := s.RconConnect()
 	if err != nil {
 		return 0, err
@@ -62,9 +62,9 @@ func (s Server) GetPlayerCount() (int, error) {
 	return playerCount, nil
 }
 
-// This assumes that the bot is running on the same machine as the server. Would not be needed if hosted on dedicated server.
+// This assumes that the bot is running on the same machine as the server. If SERVER_ADDRESS is supplied then it will return that.
 func (s Server) GetServerAddress() string {
-	sLogger := s.Logger.With("process", "get_server_address")
+	sLogger := s.Logger.With("function", "get_server_address")
 
 	err := godotenv.Load()
 	if err != nil {
@@ -93,7 +93,7 @@ func (s Server) GetServerAddress() string {
 }
 
 func (s Server) ListPlayers() (string, error) {
-	sLogger := s.Logger.With("process", "get_player_count")
+	sLogger := s.Logger.With("function", "get_player_count")
 	conn, err := s.RconConnect()
 	if err != nil {
 		return err.Error(), err
@@ -120,12 +120,13 @@ func (s Server) ListPlayers() (string, error) {
 	if responseLeft[2] == fmt.Sprint(0) {
 		return "There are no players online.", nil
 	} else {
+		sLogger.Info("players online", "names", usernames)
 		return fmt.Sprintf("There are %s player(s) online, %s", responseLeft[2], usernames), nil
 	}
 }
 
 func LoadPlayerList(l *slog.Logger) (map[string]string, error) {
-	l = l.With("process", "load_player_list")
+	l = l.With("function", "load_player_list")
 
 	playerList := map[string]string{}
 
@@ -147,7 +148,7 @@ func LoadPlayerList(l *slog.Logger) (map[string]string, error) {
 }
 
 func (s Server) RconConnect() (*rcon.Conn, error) {
-	sLogger := s.Logger.With("process", "rcon_connect")
+	sLogger := s.Logger.With("function", "rcon_connect")
 	err := godotenv.Load()
 	if err != nil {
 		sLogger.Error("error loading .env file", "error", err)
@@ -165,7 +166,7 @@ func (s Server) RconConnect() (*rcon.Conn, error) {
 }
 
 func (s Server) RestartServer(conn *rcon.Conn) error {
-	sLogger := s.Logger.With("process", "restart_server")
+	sLogger := s.Logger.With("function", "restart_server")
 	sLogger.Info("restarting server")
 	time.Sleep(10 * time.Second)
 
@@ -205,11 +206,11 @@ func (s Server) ServerRunning() bool {
 		return true
 	}
 
-	return true
+	return false
 }
 
 func (s Server) StartServer() error {
-	sLogger := s.Logger.With("process", "start_server")
+	sLogger := s.Logger.With("function", "start_server")
 	if !s.ServerRunning() {
 		err := godotenv.Load()
 		if err != nil {

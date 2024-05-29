@@ -78,7 +78,7 @@ func main() {
 		Logger.Error("error starting cron scheduler", "error", err)
 	}
 
-	bot.AddCronJobs(c, server, Logger.With("process", "cron_job"))
+	bot.AddCronJobs(c, server)
 
 	c.Start()
 

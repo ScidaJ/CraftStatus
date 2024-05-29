@@ -3,13 +3,12 @@ package bot
 import (
 	botrcon "DiscordMinecraftHelper/server"
 	"fmt"
-	"log/slog"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/go-co-op/gocron/v2"
 )
 
-func AddCronJobs(c gocron.Scheduler, server botrcon.Server, logger *slog.Logger) {
+func AddCronJobs(c gocron.Scheduler, server botrcon.Server) {
 	c.NewJob(
 		gocron.DailyJob(
 			1,
