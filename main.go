@@ -35,13 +35,10 @@ func main() {
 		Logger.Error("error loading .env file", "error", err)
 	}
 
+	serverEnv := botrcon.NewServerEnv()
+
 	GuildID = os.Getenv("GUILD_ID")
 	BotToken = os.Getenv("BOT_TOKEN")
-
-	playerList, err := botrcon.LoadPlayerList(Logger)
-	if err != nil {
-		Logger.Warn("error loading PLAYER_LIST", err)
-	}
 
 	// Bot init
 	s, err = discordgo.New("Bot " + BotToken)
@@ -50,8 +47,8 @@ func main() {
 	}
 
 	server := botrcon.Server{
-		Logger:  Logger,
-		Players: playerList,
+		Logger: Logger,
+		Env:    serverEnv,
 	}
 
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
@@ -63,6 +60,7 @@ func main() {
 		Logger.Error("error opening Discord session", "error", err)
 	}
 
+	// Slash command init
 	commands.AddCommandHandlers(s, server, Logger)
 	commands.RegisterCommands(s, GuildID, Logger)
 
@@ -72,30 +70,33 @@ func main() {
 	signal.Notify(stop, os.Interrupt)
 	Logger.Info("press Ctrl+C to exit")
 
+	// Cron job init
 	c, err := gocron.NewScheduler(gocron.WithLocation(time.Local))
 	if err != nil {
 		c.Shutdown()
 		Logger.Error("error starting cron scheduler", "error", err)
 	}
 
-	bot.AddCronJobs(c, server, Logger.With("process", "cron_job"))
+	bot.AddCronJobs(c, server)
 
 	c.Start()
 
+	// Status init
 	statusTicker := time.NewTicker(10 * time.Minute)
 	go func(s *discordgo.Session, server botrcon.Server) {
 		for {
 			select {
 			case <-statusTicker.C:
-				bot.UpdateBotStatus(s, server, Logger)
+				bot.UpdateBotStatus(s, server)
 			case <-stop:
 				return
 			}
 		}
 	}(s, server)
 
-	bot.UpdateBotStatus(s, server, Logger)
+	bot.UpdateBotStatus(s, server)
 
+	// Shutdown
 	<-stop
 
 	c.Shutdown()

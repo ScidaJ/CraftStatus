@@ -6,23 +6,21 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gorcon/rcon"
-	"github.com/joho/godotenv"
 )
 
 type Server struct {
-	Logger  *slog.Logger
-	Players map[string]string
+	Logger *slog.Logger
+	Env    ServerEnv
 }
 
 func (s Server) DailyRestart() {
-	sLogger := s.Logger.With("process", "daily_restart")
+	sLogger := s.Logger.With("function", "daily_restart")
 	if s.ServerRunning() {
 		conn, err := s.RconConnect()
 		if err != nil {
@@ -31,7 +29,7 @@ func (s Server) DailyRestart() {
 
 		err = s.RestartServer(conn)
 		if err != nil {
-			sLogger.Warn("error restarting server", "process", "daily_restart", "error", err)
+			sLogger.Warn("error restarting server", "error", err)
 		}
 	} else {
 		err := s.StartServer()
@@ -42,7 +40,7 @@ func (s Server) DailyRestart() {
 }
 
 func (s Server) GetPlayerCount() (int, error) {
-	sLogger := s.Logger.With("process", "get_player_count")
+	sLogger := s.Logger.With("function", "get_player_count")
 	conn, err := s.RconConnect()
 	if err != nil {
 		return 0, err
@@ -62,19 +60,12 @@ func (s Server) GetPlayerCount() (int, error) {
 	return playerCount, nil
 }
 
-// This assumes that the bot is running on the same machine as the server. Would not be needed if hosted on dedicated server.
+// This assumes that the bot is running on the same machine as the server. If SERVER_ADDRESS is supplied then it will return that.
 func (s Server) GetServerAddress() string {
-	sLogger := s.Logger.With("process", "get_server_address")
+	sLogger := s.Logger.With("function", "get_server_address")
 
-	err := godotenv.Load()
-	if err != nil {
-		sLogger.Error("error loading .env file", "error", err)
-	}
-
-	sAddress := os.Getenv("SERVER_ADDRESS")
-
-	if sAddress != "" {
-		return sAddress
+	if s.Env.SERVER_ADDRESS != "" {
+		return s.Env.SERVER_ADDRESS
 	}
 
 	ipService := "https://api.ipify.org"
@@ -93,7 +84,7 @@ func (s Server) GetServerAddress() string {
 }
 
 func (s Server) ListPlayers() (string, error) {
-	sLogger := s.Logger.With("process", "get_player_count")
+	sLogger := s.Logger.With("function", "get_player_count")
 	conn, err := s.RconConnect()
 	if err != nil {
 		return err.Error(), err
@@ -120,43 +111,13 @@ func (s Server) ListPlayers() (string, error) {
 	if responseLeft[2] == fmt.Sprint(0) {
 		return "There are no players online.", nil
 	} else {
+		sLogger.Info("players online", "names", usernames)
 		return fmt.Sprintf("There are %s player(s) online, %s", responseLeft[2], usernames), nil
 	}
 }
 
-func LoadPlayerList(l *slog.Logger) (map[string]string, error) {
-	l = l.With("process", "load_player_list")
-
-	playerList := map[string]string{}
-
-	err := godotenv.Load()
-	if err != nil {
-		l.Error("error loading .env file", "error", err)
-		return playerList, err
-	}
-
-	playersString := os.Getenv("PLAYER_LIST")
-	playersSlice := strings.Split(playersString, ",")
-
-	for _, v := range playersSlice {
-		player := strings.Split(v, ":")
-		playerList[player[0]] = player[1]
-	}
-
-	return playerList, err
-}
-
 func (s Server) RconConnect() (*rcon.Conn, error) {
-	sLogger := s.Logger.With("process", "rcon_connect")
-	err := godotenv.Load()
-	if err != nil {
-		sLogger.Error("error loading .env file", "error", err)
-	}
-
-	rconAddress := os.Getenv("RCON_ADDRESS")
-	rconPassword := os.Getenv("RCON_PASSWORD")
-
-	conn, err := rcon.Dial(rconAddress, rconPassword)
+	conn, err := rcon.Dial(s.Env.RCON_ADDRESS, s.Env.RCON_PASSWORD)
 	if err != nil {
 		return nil, errors.New("server offline")
 	}
@@ -165,7 +126,7 @@ func (s Server) RconConnect() (*rcon.Conn, error) {
 }
 
 func (s Server) RestartServer(conn *rcon.Conn) error {
-	sLogger := s.Logger.With("process", "restart_server")
+	sLogger := s.Logger.With("function", "restart_server")
 	sLogger.Info("restarting server")
 	time.Sleep(10 * time.Second)
 
@@ -205,20 +166,14 @@ func (s Server) ServerRunning() bool {
 		return true
 	}
 
-	return true
+	return false
 }
 
 func (s Server) StartServer() error {
-	sLogger := s.Logger.With("process", "start_server")
+	sLogger := s.Logger.With("function", "start_server")
 	if !s.ServerRunning() {
-		err := godotenv.Load()
-		if err != nil {
-			sLogger.Error("error loading .env file", "error", err)
-		}
-
-		serverPath := os.Getenv("START_SERVER_PATH")
-		c := exec.Command("cmd.exe", "/C", "Start", serverPath)
-		err = c.Start()
+		c := exec.Command("cmd.exe", "/C", "Start", s.Env.START_SERVER_PATH)
+		err := c.Start()
 		if err != nil {
 			sLogger.Warn("unable to start server", "error", err)
 			return err
@@ -244,7 +199,7 @@ func (s Server) nameDecoder(usernameList []string) (string, error) {
 	for _, v := range usernameList {
 		v = strings.TrimSuffix(v, "\n")
 
-		playerName, ok := s.Players[v]
+		playerName, ok := s.Env.PLAYER_LIST[v]
 		if !ok {
 			_, err := nameList.WriteString(v)
 			if err != nil {

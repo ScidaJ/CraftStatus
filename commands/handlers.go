@@ -4,11 +4,9 @@ import (
 	"DiscordMinecraftHelper/bot"
 	botrcon "DiscordMinecraftHelper/server"
 	"fmt"
-	"log/slog"
 	"os"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/joho/godotenv"
 )
 
 func PlayerListHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
@@ -43,7 +41,7 @@ func PlayerListHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g b
 
 func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
 	g.Logger = g.Logger.With("command", "restart")
-	bot.UpdateBotStatus(s, g, g.Logger)
+	bot.UpdateBotStatus(s, g)
 
 	conn, err := g.RconConnect()
 	if err.Error() == "server offline" {
@@ -93,12 +91,12 @@ func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		conn.Close()
 		s.ChannelMessageSend(i.ChannelID, "Server has restarted.")
 	}
-	bot.UpdateBotStatus(s, g, g.Logger)
+	bot.UpdateBotStatus(s, g)
 }
 
 func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
 	g.Logger = g.Logger.With("command", "start")
-	bot.UpdateBotStatus(s, g, g.Logger)
+	bot.UpdateBotStatus(s, g)
 
 	conn, _ := g.RconConnect()
 	if conn != nil {
@@ -124,7 +122,7 @@ func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g 
 		notifyAdmin(s, i.ChannelID)
 	}
 	s.ChannelMessageSend(i.ChannelID, "Server has started.")
-	bot.UpdateBotStatus(s, g, g.Logger)
+	bot.UpdateBotStatus(s, g)
 }
 
 func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
@@ -159,11 +157,11 @@ func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate, 
 }
 
 func notifyAdmin(s *discordgo.Session, c string) {
-	err := godotenv.Load()
-	if err != nil {
-		slog.Error("error notifying admin", "error", err)
+	admin, ok := os.LookupEnv("ADMIN")
+	if !ok {
+		s.ChannelMessageSend(c, "There is a problem with the server.")
+		return
 	}
 
-	admin := os.Getenv("ADMIN")
 	s.ChannelMessageSend(c, fmt.Sprintf("<@%v> There is a problem with the server.", admin))
 }
