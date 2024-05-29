@@ -87,14 +87,14 @@ func main() {
 		for {
 			select {
 			case <-statusTicker.C:
-				bot.UpdateBotStatus(s, server, Logger)
+				bot.UpdateBotStatus(s, server)
 			case <-stop:
 				return
 			}
 		}
 	}(s, server)
 
-	bot.UpdateBotStatus(s, server, Logger)
+	bot.UpdateBotStatus(s, server)
 
 	<-stop
 
