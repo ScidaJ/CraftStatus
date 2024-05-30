@@ -39,15 +39,13 @@ var (
 func AddCommandHandlers(s *discordgo.Session, server botrcon.Server, logger *slog.Logger) {
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		commandHandlers := GetCommandsHandlers()
-		logger.Info("command received", "command", i.ApplicationCommandData().Name, "user", i.Member.User.GlobalName)
+		logger.Info("command received", "command", i.ApplicationCommandData().Name, "user", i.Member.User.Username)
 		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
 			h(s, i, server)
 		}
 	})
 }
 
-// Command structs located in commands.go must
-// be in the returned slice or they will not be applied
 func GetCommands() []SlashCommand {
 	return []SlashCommand{
 		List,
