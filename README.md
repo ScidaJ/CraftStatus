@@ -61,7 +61,7 @@ This will be a quick overview of the variables in the `.env` file.
 * `RCON_ADDRESS` - This is set in your `server.properties` file or similar. Port must be supplied with the address.
 * `RCON_PASSWORD` - This is set in your `server.properties` file or similar.
 * `ADMIN` - The User ID of the "Admin" user for the bot/server. They will be pinged if there is an issue with the server.
-* `START_SERVER_PATH` The path to your `startserver.bat` file, needed for `/start-server` and `/restart-server` commands, as well as the auto-restarting.
+* `START_SERVER_PATH` The path to your `startserver.bat` file, needed for `/start` and `/restart` commands, as well as the auto-restarting.
 * `SERVER_ADDRESS` Optional. The `/address` command just returns the IP of the host machine, as this bot is assuming that the server and bot are running on the same machine. If this variable is filled in then it will instead return this value.
 * `PLAYER_LIST` Optional. For use with `/list` command. If value is provided in the format of `[InGameName1:Nickname1,InGameName2:Nickname2,InGameName3:Nickname3]` then it will replace the in game name with the provided nickname in the list. If no nickname is provided then it will print the in game name instead.
 
