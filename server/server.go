@@ -31,11 +31,6 @@ func (s Server) DailyRestart() {
 		if err != nil {
 			sLogger.Warn("error restarting server", "error", err)
 		}
-	} else {
-		err := s.StartServer()
-		if err != nil {
-			sLogger.Warn("error starting server", "error", err)
-		}
 	}
 }
 
