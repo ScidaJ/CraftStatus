@@ -19,6 +19,8 @@ and you're good to go!
 
 ## Running the bot
 
+**If you're just looking for an `exe` to run head over to the releases and download the latest zip. It has a README inside that will help you get started.**
+
 ```go run main.go```
 
 ## Setup
