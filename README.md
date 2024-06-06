@@ -15,6 +15,7 @@ echo Restarting automatically in 10 seconds (press Ctrl + C to cancel)
 timeout /t 10 /nobreak > NUL
 goto:START
 ```
+
 and you're good to go!
 
 ## Running the bot

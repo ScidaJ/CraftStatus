@@ -157,11 +157,7 @@ func (s Server) ServerRunning() bool {
 
 	defer conn.Close()
 
-	if conn != nil {
-		return true
-	}
-
-	return false
+	return conn != nil
 }
 
 func (s Server) StartServer() error {
