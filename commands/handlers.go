@@ -120,6 +120,7 @@ func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g 
 	err := g.StartServer()
 	if err != nil {
 		notifyAdmin(s, i.ChannelID)
+		return
 	}
 	s.ChannelMessageSend(i.ChannelID, "Server has started.")
 	bot.UpdateBotStatus(s, g)

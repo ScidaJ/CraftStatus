@@ -31,11 +31,6 @@ func (s Server) DailyRestart() {
 		if err != nil {
 			sLogger.Warn("error restarting server", "error", err)
 		}
-	} else {
-		err := s.StartServer()
-		if err != nil {
-			sLogger.Warn("error starting server", "error", err)
-		}
 	}
 }
 
@@ -162,11 +157,7 @@ func (s Server) ServerRunning() bool {
 
 	defer conn.Close()
 
-	if conn != nil {
-		return true
-	}
-
-	return false
+	return conn != nil
 }
 
 func (s Server) StartServer() error {
