@@ -61,7 +61,7 @@ func main() {
 	}
 
 	// Slash command init
-	commands.AddCommandHandlers(s, server, Logger)
+	commands.AddCommandHandlers(s, &server, Logger)
 	commands.RegisterCommands(s, GuildID, Logger)
 
 	defer s.Close()
@@ -77,13 +77,13 @@ func main() {
 		Logger.Error("error starting cron scheduler", "error", err)
 	}
 
-	bot.AddCronJobs(c, server)
+	bot.AddCronJobs(c, &server)
 
 	c.Start()
 
 	// Status init
 	statusTicker := time.NewTicker(10 * time.Minute)
-	go func(s *discordgo.Session, server botrcon.Server) {
+	go func(s *discordgo.Session, server *botrcon.Server) {
 		for {
 			select {
 			case <-statusTicker.C:
@@ -92,9 +92,9 @@ func main() {
 				return
 			}
 		}
-	}(s, server)
+	}(s, &server)
 
-	bot.UpdateBotStatus(s, server)
+	bot.UpdateBotStatus(s, &server)
 
 	// Shutdown
 	<-stop

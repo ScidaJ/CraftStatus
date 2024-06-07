@@ -9,8 +9,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func PlayerListHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
-	g.Logger = g.Logger.With("command", "list")
+func PlayerListHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g *botrcon.Server) {
 	if !g.ServerRunning() {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -39,8 +38,7 @@ func PlayerListHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g b
 	}
 }
 
-func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
-	g.Logger = g.Logger.With("command", "restart")
+func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g *botrcon.Server) {
 	bot.UpdateBotStatus(s, g)
 
 	conn, err := g.RconConnect()
@@ -53,7 +51,13 @@ func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, 
 					Content: "Server is offline. Attempting to start server.",
 				},
 			})
-			StartServerHandler(s, i, g)
+			err = g.StartServer()
+			if err != nil {
+				notifyAdmin(s, i.ChannelID)
+				return
+			}
+
+			s.ChannelMessageSend(i.ChannelID, "Server has started.")
 			return
 		} else {
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -95,8 +99,7 @@ func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, 
 	bot.UpdateBotStatus(s, g)
 }
 
-func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
-	g.Logger = g.Logger.With("command", "start")
+func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g *botrcon.Server) {
 	bot.UpdateBotStatus(s, g)
 
 	conn, _ := g.RconConnect()
@@ -127,8 +130,60 @@ func StartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g 
 	bot.UpdateBotStatus(s, g)
 }
 
-func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server) {
-	g.Logger = g.Logger.With("command", "address")
+func StopServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g *botrcon.Server) {
+	admin, ok := os.LookupEnv("ADMIN")
+	if !ok {
+		s.ChannelMessageSend(i.ChannelID, "admin user not found.")
+		return
+	}
+
+	if i.Member.User.ID != admin {
+		g.Logger.Warn(fmt.Sprintf("non-admin user using /stop: %v", i.Member.User.Username))
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "You are not authorized to use this command.",
+			},
+		})
+		return
+	}
+
+	conn, _ := g.RconConnect()
+	if conn == nil && g.Process == nil {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Server is not running.",
+			},
+		})
+		return
+	} else if conn == nil && g.Process != nil {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Unable to connect to server.",
+			},
+		})
+		return
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "Stopping server",
+		},
+	})
+
+	err := g.StopServer()
+	if err != nil {
+		notifyAdmin(s, i.ChannelID)
+		return
+	}
+	s.ChannelMessageSend(i.ChannelID, "Server has stopped.")
+	bot.UpdateBotStatus(s, g)
+}
+
+func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g *botrcon.Server) {
 	message := ""
 
 	conn, err := g.RconConnect()
@@ -161,7 +216,7 @@ func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate, 
 func notifyAdmin(s *discordgo.Session, c string) {
 	admin, ok := os.LookupEnv("ADMIN")
 	if !ok {
-		s.ChannelMessageSend(c, "There is a problem with the server.")
+		s.ChannelMessageSend(c, "admin user not found.")
 		return
 	}
 

@@ -14,7 +14,7 @@ type (
 		Options     []*discordgo.ApplicationCommandOption
 	}
 
-	HandleFunc func(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server)
+	HandleFunc func(s *discordgo.Session, i *discordgo.InteractionCreate, g *botrcon.Server)
 )
 
 var (
@@ -34,12 +34,16 @@ var (
 		Name:        "address",
 		Description: "Return the current server IP + port.",
 	}
+	Stop = SlashCommand{
+		Name:        "stop",
+		Description: "Stops the server if it is currently running.",
+	}
 )
 
-func AddCommandHandlers(s *discordgo.Session, server botrcon.Server, logger *slog.Logger) {
+func AddCommandHandlers(s *discordgo.Session, server *botrcon.Server, logger *slog.Logger) {
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		commandHandlers := GetCommandsHandlers()
-		logger.Info("command received", "command", i.ApplicationCommandData().Name, "user", i.Member.User.Username)
+		logger.Info("command received", "command", i.ApplicationCommandData().Name)
 		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
 			h(s, i, server)
 		}
@@ -52,6 +56,7 @@ func GetCommands() []SlashCommand {
 		Start,
 		Restart,
 		Address,
+		Stop,
 	}
 }
 
@@ -64,6 +69,7 @@ func GetCommandsHandlers() map[string]HandleFunc {
 		"restart": RestartServerHandler,
 		"start":   StartServerHandler,
 		"address": ServerAddressHandler,
+		"stop":    StopServerHandler,
 	}
 }
 
