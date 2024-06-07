@@ -1,3 +1,5 @@
+// @TODO: Capture CMD process on start. Adjust restart function. Add /stop command with admin protection
+// @TODO: Add StopServer function which sends SIGINT to Cmd process. V2 of bot
 package botrcon
 
 import (

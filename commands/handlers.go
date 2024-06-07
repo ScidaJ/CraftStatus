@@ -44,24 +44,25 @@ func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, 
 	bot.UpdateBotStatus(s, g)
 
 	conn, err := g.RconConnect()
-	if err.Error() == "server offline" {
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "Server is offline. Attempting to start server.",
-			},
-		})
-		StartServerHandler(s, i, g)
-		return
-	}
 
 	if err != nil {
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "Unable to restart server.",
-			},
-		})
+		if err.Error() == "server offline" {
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Server is offline. Attempting to start server.",
+				},
+			})
+			StartServerHandler(s, i, g)
+			return
+		} else {
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Unable to restart server.",
+				},
+			})
+		}
 		notifyAdmin(s, i.ChannelID)
 		return
 	}
