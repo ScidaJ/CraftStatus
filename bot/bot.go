@@ -8,7 +8,7 @@ import (
 	"github.com/go-co-op/gocron/v2"
 )
 
-func AddCronJobs(c gocron.Scheduler, server botrcon.Server) {
+func AddCronJobs(c gocron.Scheduler, server *botrcon.Server) {
 	c.NewJob(
 		gocron.DailyJob(
 			1,
@@ -58,7 +58,7 @@ func AddCronJobs(c gocron.Scheduler, server botrcon.Server) {
 	)
 }
 
-func UpdateBotStatus(s *discordgo.Session, server botrcon.Server) {
+func UpdateBotStatus(s *discordgo.Session, server *botrcon.Server) {
 	playerCount, _ := server.GetPlayerCount()
 	if server.ServerRunning() {
 		activity := discordgo.Activity{
