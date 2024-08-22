@@ -1,22 +1,10 @@
 # DiscordMinecraftHelper
 
-This is a small self hosted Discord bot designed to monitor a Minecraft server. It features player count monitoring, server status in the sidebar, structured logging, and automatic daily restarts at 2AM. Currently only Windows compatible.
+This is a small self hosted Discord bot designed to monitor a Minecraft server. It features player count monitoring, server status in the sidebar, and structured logging.
 
 ## Requirements
 
 `go >= 1.21`
-
-To use the daily restarts and `/restart-server` command, you need a bat file which automatically restarts the server upon shutdown. The All The Mods 9 modpack has one, but all you need is to add this snippet to your `startserver.bat`, around the existing code that launches the `server.jar`
-
-```bat
-:START
-:: Code that launches server jar
-echo Restarting automatically in 10 seconds (press Ctrl + C to cancel)
-timeout /t 10 /nobreak > NUL
-goto:START
-```
-
-and you're good to go!
 
 ## Running the bot
 
@@ -62,8 +50,8 @@ This will be a quick overview of the variables in the `.env` file.
 * `RCON_ADDRESS` - This is set in your `server.properties` file or similar. Port must be supplied with the address.
 * `RCON_PASSWORD` - This is set in your `server.properties` file or similar.
 * `ADMIN` - The User ID of the "Admin" user for the bot/server. They will be pinged if there is an issue with the server.
-* `START_SERVER_PATH` The path to your `startserver.bat` file, needed for `/start` and `/restart` commands, as well as the auto-restarting.
 * `SERVER_ADDRESS` Optional. The `/address` command just returns the IP of the host machine, as this bot is assuming that the server and bot are running on the same machine. If this variable is filled in then it will instead return this value.
+* `SERVER_PORT` Optional.
 * `PLAYER_LIST` Optional. For use with `/list` command. If value is provided in the format of `[InGameName1:Nickname1,InGameName2:Nickname2,InGameName3:Nickname3]` then it will replace the in game name with the provided nickname in the list. If no nickname is provided then it will print the in game name instead.
 
 ## Commands
@@ -73,4 +61,3 @@ The bot only has four commands as it is fairly simple in scope. They are listed 
 * `/address` Prints out the address of the server. As the bot assumes that the server is running on the same machine it will return the IP of the host machine. **If you do not want this to be the case then fill in the `SERVER_ADDRESS` variable in the `.env` file. It will print that value instead.**
 * `/list` List the players currently on the server. If the `.env` variable `PLAYER_LIST` is populated the bot will replace any matching usernames with the corresponding nickname.
 * `/restart` Sends the `/stop` command to the server. When paired with the batch script given above the server will restart after 10 seconds.
-* `/start` Starts the server by executing the given batch file in `START_SERVER_PATH`
