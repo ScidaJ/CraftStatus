@@ -1,7 +1,7 @@
 package commands
 
 import (
-	botrcon "DiscordMinecraftHelper/server"
+	botrcon "DiscordMinecraftHelper/internal/server"
 	"log/slog"
 
 	"github.com/bwmarrin/discordgo"
@@ -14,32 +14,28 @@ type (
 		Options     []*discordgo.ApplicationCommandOption
 	}
 
-	HandleFunc func(s *discordgo.Session, i *discordgo.InteractionCreate, g botrcon.Server)
+	HandleFunc func(s *discordgo.Session, i *discordgo.InteractionCreate, g *botrcon.Server)
 )
 
 var (
-	List = SlashCommand{
-		Name:        "list",
-		Description: "List the players currently active on the server.",
-	}
-	Start = SlashCommand{
-		Name:        "start",
-		Description: "Starts the Minecraft server. Will not restart it if already started.",
-	}
-	Restart = SlashCommand{
-		Name:        "restart",
-		Description: "Restarts the Minecraft server manually. This is done every night automatically.",
-	}
 	Address = SlashCommand{
 		Name:        "address",
 		Description: "Return the current server IP + port.",
 	}
+	List = SlashCommand{
+		Name:        "list",
+		Description: "List the players currently active on the server.",
+	}
+	Restart = SlashCommand{
+		Name:        "restart",
+		Description: "Restarts the Minecraft server manually. Admin user only.",
+	}
 )
 
-func AddCommandHandlers(s *discordgo.Session, server botrcon.Server, logger *slog.Logger) {
+func AddCommandHandlers(s *discordgo.Session, server *botrcon.Server, logger *slog.Logger) {
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		commandHandlers := GetCommandsHandlers()
-		logger.Info("command received", "command", i.ApplicationCommandData().Name, "user", i.Member.User.Username)
+		logger.Info("command received", "command", i.ApplicationCommandData().Name)
 		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
 			h(s, i, server)
 		}
@@ -48,10 +44,9 @@ func AddCommandHandlers(s *discordgo.Session, server botrcon.Server, logger *slo
 
 func GetCommands() []SlashCommand {
 	return []SlashCommand{
-		List,
-		Start,
-		Restart,
 		Address,
+		List,
+		Restart,
 	}
 }
 
@@ -60,10 +55,9 @@ func GetCommands() []SlashCommand {
 // not be registered.
 func GetCommandsHandlers() map[string]HandleFunc {
 	return map[string]HandleFunc{
-		"list":    PlayerListHandler,
-		"restart": RestartServerHandler,
-		"start":   StartServerHandler,
-		"address": ServerAddressHandler,
+		"address": AddressHandler,
+		"list":    ListHandler,
+		"restart": RestartHandler,
 	}
 }
 

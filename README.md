@@ -1,37 +1,44 @@
 # DiscordMinecraftHelper
 
-This is a small self hosted Discord bot designed to monitor a Minecraft server. It features player count monitoring, server status in the sidebar, structured logging, and automatic daily restarts at 2AM. Currently only Windows compatible.
+This is a small self hosted Discord bot designed to monitor a Minecraft server. It features player count monitoring, server status in the sidebar, and structured logging.
 
-## Requirements
+## Running the Bot
 
-`go >= 1.21`
+If you're just looking for a `docker-compose.yml` or `.exe` to run then head on over to the releases. You'll find ZIPs of both, as well as an `.env.sample` and a README that is a copy of this one.
 
-To use the daily restarts and `/restart-server` command, you need a bat file which automatically restarts the server upon shutdown. The All The Mods 9 modpack has one, but all you need is to add this snippet to your `startserver.bat`, around the existing code that launches the `server.jar`
+### Docker Compose
 
-```bat
-:START
-:: Code that launches server jar
-echo Restarting automatically in 10 seconds (press Ctrl + C to cancel)
-timeout /t 10 /nobreak > NUL
-goto:START
+I'm not sure the best way to do this so this is my docker-compose.yml that I am currently using.
+
+```YAML
+services:
+  bot:
+    container_name: bot
+    image: "scidaj57/minecraft-helper"
+    ports:
+      - "8080:8080"
+    env_file:
+      - "./.env"
 ```
 
-and you're good to go!
+You can also define your environment variables within the `docker-compose.yml` like so
 
-## Running the bot
+```YAML
+services:
+  bot:
+    container_name: bot
+    image: "scidaj57/minecraft-helper"
+    ports:
+      - "8080:8080"
+    environment:
+      BOT_TOKEN:      "XXX0XXXxXxX0XXXxXxXxXXX0Xx"
+      GUILD_ID:       "000000000000000000"
+      RCON_ADDRESS:   "127.0.0.1:25565"
+      RCON_PASSWORD:  "hunter2"
+      ADMIN:          "000000000000000000" 
+```
 
-**If you're just looking for an `exe` to run head over to the releases and download the latest zip. It has a README inside that will help you get started.**
-
-```go run main.go```
-
-## Setup
-
-1. Clone this repo ```git clone git@github.com:ScidaJ/DiscordMinecraftHelper.git```
-2. CD into the new directory ```cd DiscordMinecraftHelper```
-3. Install dependencies ```go mod download```
-4. Make a copy of `.env.sample` and rename to `.env`. The variables in that file are explained [further on.](#.env)
-
-## Everything Else
+## Discord Setup
 
 This requires making an application with Discord on the Discord Developer Portal, found [here.](https://discord.com/developers/applications) There are a few pieces of information that we need from there, so lets go over what they are.
 
@@ -62,15 +69,14 @@ This will be a quick overview of the variables in the `.env` file.
 * `RCON_ADDRESS` - This is set in your `server.properties` file or similar. Port must be supplied with the address.
 * `RCON_PASSWORD` - This is set in your `server.properties` file or similar.
 * `ADMIN` - The User ID of the "Admin" user for the bot/server. They will be pinged if there is an issue with the server.
-* `START_SERVER_PATH` The path to your `startserver.bat` file, needed for `/start` and `/restart` commands, as well as the auto-restarting.
 * `SERVER_ADDRESS` Optional. The `/address` command just returns the IP of the host machine, as this bot is assuming that the server and bot are running on the same machine. If this variable is filled in then it will instead return this value.
+* `SERVER_PORT` Optional.
 * `PLAYER_LIST` Optional. For use with `/list` command. If value is provided in the format of `[InGameName1:Nickname1,InGameName2:Nickname2,InGameName3:Nickname3]` then it will replace the in game name with the provided nickname in the list. If no nickname is provided then it will print the in game name instead.
 
 ## Commands
 
-The bot only has four commands as it is fairly simple in scope. They are listed below
+The bot only has three commands as it is fairly simple in scope. They are listed below
 
 * `/address` Prints out the address of the server. As the bot assumes that the server is running on the same machine it will return the IP of the host machine. **If you do not want this to be the case then fill in the `SERVER_ADDRESS` variable in the `.env` file. It will print that value instead.**
 * `/list` List the players currently on the server. If the `.env` variable `PLAYER_LIST` is populated the bot will replace any matching usernames with the corresponding nickname.
-* `/restart` Sends the `/stop` command to the server. When paired with the batch script given above the server will restart after 10 seconds.
-* `/start` Starts the server by executing the given batch file in `START_SERVER_PATH`
+* `/restart` Sends the `/stop` command to the server then checks every 30 seconds for 5 minutes if it has relaunched. You must have some way of restarting your server automatically. 

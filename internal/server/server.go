@@ -1,5 +1,3 @@
-// @TODO: Capture CMD process on start. Adjust restart function. Add /stop command with admin protection
-// @TODO: Add StopServer function which sends SIGINT to Cmd process. V2 of bot
 package botrcon
 
 import (
@@ -8,7 +6,6 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -21,22 +18,7 @@ type Server struct {
 	Env    ServerEnv
 }
 
-func (s Server) DailyRestart() {
-	sLogger := s.Logger.With("function", "daily_restart")
-	if s.ServerRunning() {
-		conn, err := s.RconConnect()
-		if err != nil {
-			return
-		}
-
-		err = s.RestartServer(conn)
-		if err != nil {
-			sLogger.Warn("error restarting server", "error", err)
-		}
-	}
-}
-
-func (s Server) GetPlayerCount() (int, error) {
+func (s *Server) GetPlayerCount() (int, error) {
 	sLogger := s.Logger.With("function", "get_player_count")
 	conn, err := s.RconConnect()
 	if err != nil {
@@ -58,7 +40,7 @@ func (s Server) GetPlayerCount() (int, error) {
 }
 
 // This assumes that the bot is running on the same machine as the server. If SERVER_ADDRESS is supplied then it will return that.
-func (s Server) GetServerAddress() string {
+func (s *Server) GetServerAddress() string {
 	sLogger := s.Logger.With("function", "get_server_address")
 
 	if s.Env.SERVER_ADDRESS != "" {
@@ -80,7 +62,7 @@ func (s Server) GetServerAddress() string {
 	return string(body)
 }
 
-func (s Server) ListPlayers() (string, error) {
+func (s *Server) ListPlayers() (string, error) {
 	sLogger := s.Logger.With("function", "get_player_count")
 	conn, err := s.RconConnect()
 	if err != nil {
@@ -113,19 +95,19 @@ func (s Server) ListPlayers() (string, error) {
 	}
 }
 
-func (s Server) RconConnect() (*rcon.Conn, error) {
+func (s *Server) RconConnect() (*rcon.Conn, error) {
 	conn, err := rcon.Dial(s.Env.RCON_ADDRESS, s.Env.RCON_PASSWORD)
 	if err != nil {
+		s.Logger.Info(err.Error())
 		return nil, errors.New("server offline")
 	}
 
 	return conn, nil
 }
 
-func (s Server) RestartServer(conn *rcon.Conn) error {
+func (s *Server) RestartServer(conn *rcon.Conn) error {
 	sLogger := s.Logger.With("function", "restart_server")
 	sLogger.Info("restarting server")
-	time.Sleep(10 * time.Second)
 
 	_, err := conn.Execute("/stop")
 	if err != nil {
@@ -151,7 +133,7 @@ func (s Server) RestartServer(conn *rcon.Conn) error {
 	return nil
 }
 
-func (s Server) ServerRunning() bool {
+func (s *Server) ServerRunning() bool {
 	conn, err := s.RconConnect()
 	if err != nil {
 		return false
@@ -162,31 +144,7 @@ func (s Server) ServerRunning() bool {
 	return conn != nil
 }
 
-func (s Server) StartServer() error {
-	sLogger := s.Logger.With("function", "start_server")
-	if !s.ServerRunning() {
-		c := exec.Command("cmd.exe", "/C", "Start", s.Env.START_SERVER_PATH)
-		err := c.Start()
-		if err != nil {
-			sLogger.Warn("unable to start server", "error", err)
-			return err
-		}
-
-		time.Sleep(5 * time.Minute)
-
-		conn, err := s.RconConnect()
-		if err != nil {
-			sLogger.Warn("unable to start server", "error", err)
-			return err
-		}
-		conn.Close()
-
-		return nil
-	}
-	return nil
-}
-
-func (s Server) nameDecoder(usernameList []string) (string, error) {
+func (s *Server) nameDecoder(usernameList []string) (string, error) {
 	var nameList strings.Builder
 
 	for _, v := range usernameList {

@@ -4,15 +4,15 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/go-co-op/gocron/v2"
 	"github.com/joho/godotenv"
 
-	"DiscordMinecraftHelper/bot"
-	"DiscordMinecraftHelper/commands"
-	botrcon "DiscordMinecraftHelper/server"
+	"DiscordMinecraftHelper/internal/bot"
+	"DiscordMinecraftHelper/internal/commands"
+	botrcon "DiscordMinecraftHelper/internal/server"
 )
 
 var GuildID string
@@ -61,29 +61,19 @@ func main() {
 	}
 
 	// Slash command init
-	commands.AddCommandHandlers(s, server, Logger)
+	commands.AddCommandHandlers(s, &server, Logger)
 	commands.RegisterCommands(s, GuildID, Logger)
 
 	defer s.Close()
 
+	// Shutdown channel init
 	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	Logger.Info("press Ctrl+C to exit")
-
-	// Cron job init
-	c, err := gocron.NewScheduler(gocron.WithLocation(time.Local))
-	if err != nil {
-		c.Shutdown()
-		Logger.Error("error starting cron scheduler", "error", err)
-	}
-
-	bot.AddCronJobs(c, server)
-
-	c.Start()
 
 	// Status init
 	statusTicker := time.NewTicker(10 * time.Minute)
-	go func(s *discordgo.Session, server botrcon.Server) {
+	go func(s *discordgo.Session, server *botrcon.Server) {
 		for {
 			select {
 			case <-statusTicker.C:
@@ -92,14 +82,12 @@ func main() {
 				return
 			}
 		}
-	}(s, server)
+	}(s, &server)
 
-	bot.UpdateBotStatus(s, server)
+	bot.UpdateBotStatus(s, &server)
 
 	// Shutdown
 	<-stop
-
-	c.Shutdown()
 
 	Logger.Info("stopping statusTicker")
 
