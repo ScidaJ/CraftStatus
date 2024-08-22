@@ -8,35 +8,16 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"os"
-	"os/exec"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/gorcon/rcon"
 )
 
 type Server struct {
-	Logger  *slog.Logger
-	Env     ServerEnv
-	Process *os.Process
-}
-
-func (s *Server) DailyRestart() {
-	sLogger := s.Logger.With("function", "daily_restart")
-	if s.ServerRunning() {
-		conn, err := s.RconConnect()
-		if err != nil {
-			return
-		}
-
-		err = s.RestartServer(conn)
-		if err != nil {
-			sLogger.Warn("error restarting server", "error", err)
-		}
-	}
+	Logger *slog.Logger
+	Env    ServerEnv
 }
 
 func (s *Server) GetPlayerCount() (int, error) {
@@ -61,11 +42,12 @@ func (s *Server) GetPlayerCount() (int, error) {
 }
 
 // This assumes that the bot is running on the same machine as the server. If SERVER_ADDRESS is supplied then it will return that.
+// TODO: Verify functionality within container. Dummy address supplied
 func (s *Server) GetServerAddress() string {
 	sLogger := s.Logger.With("function", "get_server_address")
 
 	if s.Env.SERVER_ADDRESS != "" {
-		return s.Env.SERVER_ADDRESS
+		return fmt.Sprintf("%v:%v", s.Env.SERVER_ADDRESS, s.Env.SERVER_PORT)
 	}
 
 	ipService := "https://api.ipify.org"
@@ -119,7 +101,7 @@ func (s *Server) ListPlayers() (string, error) {
 func (s *Server) RconConnect() (*rcon.Conn, error) {
 	conn, err := rcon.Dial(s.Env.RCON_ADDRESS, s.Env.RCON_PASSWORD)
 	if err != nil {
-		s.Logger.Info(fmt.Sprintf("raw error: %v", err))
+		s.Logger.Info(err.Error())
 		return nil, errors.New("server offline")
 	}
 
@@ -157,74 +139,12 @@ func (s *Server) RestartServer(conn *rcon.Conn) error {
 func (s *Server) ServerRunning() bool {
 	conn, err := s.RconConnect()
 	if err != nil {
-		if s.Process != nil {
-			s.Logger.Warn(fmt.Sprintf("server process running, unable to connect to server through rcon: %v", err))
-		}
 		return false
 	}
 
 	defer conn.Close()
 
 	return conn != nil
-}
-
-func (s *Server) StartServer() error {
-	sLogger := s.Logger.With("function", "start_server")
-	if !s.ServerRunning() {
-		cmd := exec.Command("cmd.exe", "/C", "Start", s.Env.START_SERVER_PATH)
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP,
-		}
-		err := cmd.Start()
-		if err != nil {
-			sLogger.Warn("unable to start server", "error", err)
-			return err
-		}
-
-		if cmd.Process != nil {
-			sLogger.Info("attached server process")
-			s.Process = cmd.Process
-		}
-
-		for i := 0; i < 10; i++ {
-			time.Sleep(30 * time.Second)
-
-			_, err := s.RconConnect()
-			if err == nil {
-				return nil
-			}
-		}
-		return err
-	}
-	return nil
-}
-
-func (s *Server) StopServer() error {
-	sLogger := s.Logger.With("function", "stop_server")
-	if s.Process == nil {
-		sLogger.Warn("unable to stop server, server process not running")
-		return errors.New("server process not running")
-	}
-
-	_, err := s.RconConnect()
-	if err != nil {
-		return err
-	}
-
-	err = s.Process.Signal(syscall.SIGKILL)
-	if err != nil {
-		sLogger.Warn(fmt.Sprintf("unable to kill process %v", err))
-		return err
-	}
-
-	time.Sleep(30 * time.Second)
-
-	if s.Process != nil {
-		sLogger.Warn("process still running")
-		return errors.New("server process not stopped")
-	}
-
-	return nil
 }
 
 func (s *Server) nameDecoder(usernameList []string) (string, error) {

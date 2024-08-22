@@ -6,24 +6,25 @@ import (
 )
 
 type ServerEnv struct {
-	PLAYER_LIST       map[string]string
-	RCON_ADDRESS      string
-	RCON_PASSWORD     string
-	START_SERVER_PATH string
-	SERVER_ADDRESS    string
+	PLAYER_LIST    map[string]string
+	RCON_ADDRESS   string
+	RCON_PASSWORD  string
+	SERVER_ADDRESS string
+	SERVER_PORT    string
 }
 
 func NewServerEnv() ServerEnv {
 	var env ServerEnv
 
 	serverAddress, _ := os.LookupEnv("SERVER_ADDRESS")
+	serverPort, _ := os.LookupEnv("SERVER_PORT")
 
 	env = ServerEnv{
-		PLAYER_LIST:       loadPlayerList(),
-		RCON_ADDRESS:      os.Getenv("RCON_ADDRESS"),
-		RCON_PASSWORD:     os.Getenv("RCON_PASSWORD"),
-		START_SERVER_PATH: os.Getenv("START_SERVER_PATH"),
-		SERVER_ADDRESS:    serverAddress,
+		PLAYER_LIST:    loadPlayerList(),
+		RCON_ADDRESS:   os.Getenv("RCON_ADDRESS"),
+		RCON_PASSWORD:  os.Getenv("RCON_PASSWORD"),
+		SERVER_ADDRESS: serverAddress,
+		SERVER_PORT:    serverPort,
 	}
 
 	return env
