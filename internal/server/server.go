@@ -1,5 +1,3 @@
-// @TODO: Capture CMD process on start. Adjust restart function. Add /stop command with admin protection
-// @TODO: Add StopServer function which sends SIGINT to Cmd process. V2 of bot
 package botrcon
 
 import (
@@ -42,7 +40,6 @@ func (s *Server) GetPlayerCount() (int, error) {
 }
 
 // This assumes that the bot is running on the same machine as the server. If SERVER_ADDRESS is supplied then it will return that.
-// TODO: Verify functionality within container. Dummy address supplied
 func (s *Server) GetServerAddress() string {
 	sLogger := s.Logger.With("function", "get_server_address")
 

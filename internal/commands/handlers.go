@@ -28,6 +28,7 @@ func PlayerListHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g *
 				Content: err.Error(),
 			},
 		})
+		notifyAdmin(s, i.ChannelID)
 	} else {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -47,6 +48,8 @@ func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, 
 			Content: "Command disabled.",
 		},
 	})
+
+	// TODO: Look into /restart command within the minecraft server or container options. This command will probably not be needed
 
 	// conn, err := g.RconConnect()
 
@@ -98,7 +101,6 @@ func RestartServerHandler(s *discordgo.Session, i *discordgo.InteractionCreate, 
 	// bot.UpdateBotStatus(s, g)
 }
 
-// TODO: Verify functionality. Dummy address supplied for now
 func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate, g *botrcon.Server) {
 	message := ""
 
@@ -117,7 +119,7 @@ func ServerAddressHandler(s *discordgo.Session, i *discordgo.InteractionCreate, 
 				Content: message,
 			},
 		})
-		g.Logger.Warn(err.Error())
+		notifyAdmin(s, i.ChannelID)
 	} else {
 		message += fmt.Sprintf("Server Address: %v", address)
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{

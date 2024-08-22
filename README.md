@@ -1,3 +1,10 @@
+#TODO: 
+ - Add docker section
+   - Docker quick start, possibly a wget link with a premade docker-compose.yml and .env.sample or just docker-compose.yml snippet.
+ - Clean up commands section, remove unused or missing commands
+ - Clean up .env section
+ - Clean up getting started section
+
 # DiscordMinecraftHelper
 
 This is a small self hosted Discord bot designed to monitor a Minecraft server. It features player count monitoring, server status in the sidebar, and structured logging.
