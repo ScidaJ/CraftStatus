@@ -67,9 +67,7 @@ func GetCommandsHandlers() map[string]HandleFunc {
 	return map[string]HandleFunc{
 		"list":    PlayerListHandler,
 		"restart": RestartServerHandler,
-		"start":   StartServerHandler,
 		"address": ServerAddressHandler,
-		"stop":    StopServerHandler,
 	}
 }
 

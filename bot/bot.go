@@ -5,58 +5,7 @@ import (
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/go-co-op/gocron/v2"
 )
-
-func AddCronJobs(c gocron.Scheduler, server *botrcon.Server) {
-	c.NewJob(
-		gocron.DailyJob(
-			1,
-			gocron.NewAtTimes(
-				gocron.NewAtTime(2, 0, 0),
-			),
-		),
-		gocron.NewTask(
-			func() { server.DailyRestart() },
-		),
-	)
-	c.NewJob(
-		gocron.DailyJob(
-			1,
-			gocron.NewAtTimes(
-				gocron.NewAtTime(1, 55, 0),
-			),
-		),
-		gocron.NewTask(
-			func() {
-				conn, err := server.RconConnect()
-				if err != nil {
-					return
-				} else {
-					conn.Execute("/say Server will restart in 5 minutes")
-				}
-			},
-		),
-	)
-	c.NewJob(
-		gocron.DailyJob(
-			1,
-			gocron.NewAtTimes(
-				gocron.NewAtTime(1, 30, 0),
-			),
-		),
-		gocron.NewTask(
-			func() {
-				conn, err := server.RconConnect()
-				if err != nil {
-					return
-				} else {
-					conn.Execute("/say Server will restart in 30 minutes")
-				}
-			},
-		),
-	)
-}
 
 func UpdateBotStatus(s *discordgo.Session, server *botrcon.Server) {
 	playerCount, _ := server.GetPlayerCount()
