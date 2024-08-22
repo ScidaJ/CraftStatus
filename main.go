@@ -4,10 +4,10 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/go-co-op/gocron/v2"
 	"github.com/joho/godotenv"
 
 	"DiscordMinecraftHelper/internal/bot"
@@ -67,17 +67,8 @@ func main() {
 	defer s.Close()
 
 	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	Logger.Info("press Ctrl+C to exit")
-
-	// Cron job init
-	c, err := gocron.NewScheduler(gocron.WithLocation(time.Local))
-	if err != nil {
-		c.Shutdown()
-		Logger.Error("error starting cron scheduler", "error", err)
-	}
-
-	c.Start()
 
 	// Status init
 	statusTicker := time.NewTicker(10 * time.Minute)
@@ -96,8 +87,6 @@ func main() {
 
 	// Shutdown
 	<-stop
-
-	c.Shutdown()
 
 	Logger.Info("stopping statusTicker")
 

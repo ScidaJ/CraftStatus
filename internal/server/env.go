@@ -14,25 +14,21 @@ type ServerEnv struct {
 }
 
 func NewServerEnv() ServerEnv {
-	var env ServerEnv
-
-	env = ServerEnv{
+	return ServerEnv{
 		PLAYER_LIST:    loadPlayerList(),
 		RCON_ADDRESS:   os.Getenv("RCON_ADDRESS"),
 		RCON_PASSWORD:  os.Getenv("RCON_PASSWORD"),
 		SERVER_ADDRESS: serverAddressParser(),
 	}
-
-	return env
 }
 
 func serverAddressParser() string {
 	serverAddress, exists := os.LookupEnv("SERVER_ADDRESS")
-	if !exists {
+	if !exists || serverAddress == "" {
 		return ""
 	}
 	serverPort, exists := os.LookupEnv("SERVER_PORT")
-	if !exists {
+	if !exists || serverPort == "" {
 		return serverAddress
 	} else {
 		return fmt.Sprintf("%v:%v", serverAddress, serverPort)
