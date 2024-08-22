@@ -18,25 +18,17 @@ type (
 )
 
 var (
-	List = SlashCommand{
-		Name:        "list",
-		Description: "List the players currently active on the server.",
-	}
-	Start = SlashCommand{
-		Name:        "start",
-		Description: "Starts the Minecraft server. Will not restart it if already started.",
-	}
-	Restart = SlashCommand{
-		Name:        "restart",
-		Description: "Restarts the Minecraft server manually. This is done every night automatically.",
-	}
 	Address = SlashCommand{
 		Name:        "address",
 		Description: "Return the current server IP + port.",
 	}
-	Stop = SlashCommand{
-		Name:        "stop",
-		Description: "Stops the server if it is currently running.",
+	List = SlashCommand{
+		Name:        "list",
+		Description: "List the players currently active on the server.",
+	}
+	Restart = SlashCommand{
+		Name:        "restart",
+		Description: "Restarts the Minecraft server manually. Admin user only.",
 	}
 )
 
@@ -52,11 +44,9 @@ func AddCommandHandlers(s *discordgo.Session, server *botrcon.Server, logger *sl
 
 func GetCommands() []SlashCommand {
 	return []SlashCommand{
-		List,
-		Start,
-		Restart,
 		Address,
-		Stop,
+		List,
+		Restart,
 	}
 }
 
@@ -65,9 +55,9 @@ func GetCommands() []SlashCommand {
 // not be registered.
 func GetCommandsHandlers() map[string]HandleFunc {
 	return map[string]HandleFunc{
-		"list":    PlayerListHandler,
-		"restart": RestartServerHandler,
-		"address": ServerAddressHandler,
+		"address": AddressHandler,
+		"list":    ListHandler,
+		"restart": RestartHandler,
 	}
 }
 

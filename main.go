@@ -66,6 +66,7 @@ func main() {
 
 	defer s.Close()
 
+	// Shutdown channel init
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	Logger.Info("press Ctrl+C to exit")
