@@ -6,6 +6,8 @@ This is a small self hosted Discord bot designed to monitor a Minecraft server. 
 
 If you're just looking for a `docker-compose.yml` or `.exe` to run then head on over to the releases. You'll find ZIPs of both, as well as an `.env.sample` and a README that is a copy of this one.
 
+Here is a link to the Image on Docker Hub: https://hub.docker.com/repository/docker/scidaj57/minecraft-helper/general
+
 ### Docker Compose
 
 I'm not sure the best way to do this so this is my docker-compose.yml that I am currently using.
