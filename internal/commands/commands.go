@@ -1,7 +1,7 @@
 package commands
 
 import (
-	botrcon "DiscordMinecraftHelper/server"
+	botrcon "DiscordMinecraftHelper/internal/server"
 	"log/slog"
 
 	"github.com/bwmarrin/discordgo"

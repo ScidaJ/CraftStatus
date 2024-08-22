@@ -1,7 +1,7 @@
 package bot
 
 import (
-	botrcon "DiscordMinecraftHelper/server"
+	botrcon "DiscordMinecraftHelper/internal/server"
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"

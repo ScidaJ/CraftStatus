@@ -1,8 +1,8 @@
 package commands
 
 import (
-	"DiscordMinecraftHelper/bot"
-	botrcon "DiscordMinecraftHelper/server"
+	"DiscordMinecraftHelper/internal/bot"
+	botrcon "DiscordMinecraftHelper/internal/server"
 	"fmt"
 	"os"
 

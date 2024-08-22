@@ -1,6 +1,7 @@
 package botrcon
 
 import (
+	"fmt"
 	"os"
 	"strings"
 )
@@ -10,24 +11,32 @@ type ServerEnv struct {
 	RCON_ADDRESS   string
 	RCON_PASSWORD  string
 	SERVER_ADDRESS string
-	SERVER_PORT    string
 }
 
 func NewServerEnv() ServerEnv {
 	var env ServerEnv
 
-	serverAddress, _ := os.LookupEnv("SERVER_ADDRESS")
-	serverPort, _ := os.LookupEnv("SERVER_PORT")
-
 	env = ServerEnv{
 		PLAYER_LIST:    loadPlayerList(),
 		RCON_ADDRESS:   os.Getenv("RCON_ADDRESS"),
 		RCON_PASSWORD:  os.Getenv("RCON_PASSWORD"),
-		SERVER_ADDRESS: serverAddress,
-		SERVER_PORT:    serverPort,
+		SERVER_ADDRESS: serverAddressParser(),
 	}
 
 	return env
+}
+
+func serverAddressParser() string {
+	serverAddress, exists := os.LookupEnv("SERVER_ADDRESS")
+	if !exists {
+		return ""
+	}
+	serverPort, exists := os.LookupEnv("SERVER_PORT")
+	if !exists {
+		return serverAddress
+	} else {
+		return fmt.Sprintf("%v:%v", serverAddress, serverPort)
+	}
 }
 
 func loadPlayerList() map[string]string {

@@ -47,7 +47,7 @@ func (s *Server) GetServerAddress() string {
 	sLogger := s.Logger.With("function", "get_server_address")
 
 	if s.Env.SERVER_ADDRESS != "" {
-		return fmt.Sprintf("%v:%v", s.Env.SERVER_ADDRESS, s.Env.SERVER_PORT)
+		return s.Env.SERVER_ADDRESS
 	}
 
 	ipService := "https://api.ipify.org"

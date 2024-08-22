@@ -10,9 +10,9 @@ import (
 	"github.com/go-co-op/gocron/v2"
 	"github.com/joho/godotenv"
 
-	"DiscordMinecraftHelper/bot"
-	"DiscordMinecraftHelper/commands"
-	botrcon "DiscordMinecraftHelper/server"
+	"DiscordMinecraftHelper/internal/bot"
+	"DiscordMinecraftHelper/internal/commands"
+	botrcon "DiscordMinecraftHelper/internal/server"
 )
 
 var GuildID string
