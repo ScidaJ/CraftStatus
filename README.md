@@ -10,7 +10,7 @@ Here is a link to the Image on Docker Hub: https://hub.docker.com/repository/doc
 
 ### Docker Compose
 
-I'm not sure the best way to do this so this is my docker-compose.yml that I am currently using.
+I'm not sure the best way to do this so this is my `docker-compose.yml` that I am currently using.
 
 ```YAML
 services:
@@ -72,7 +72,7 @@ This will be a quick overview of the variables in the `.env` file.
 * `RCON_PASSWORD` - This is set in your `server.properties` file or similar.
 * `ADMIN` - The User ID of the "Admin" user for the bot/server. They will be pinged if there is an issue with the server.
 * `SERVER_ADDRESS` Optional. The `/address` command just returns the IP of the host machine, as this bot is assuming that the server and bot are running on the same machine. If this variable is filled in then it will instead return this value.
-* `SERVER_PORT` Optional.
+* `SERVER_PORT` Optional. Will append to the end of the `SERVER_ADDRESS` value if present.
 * `PLAYER_LIST` Optional. For use with `/list` command. If value is provided in the format of `[InGameName1:Nickname1,InGameName2:Nickname2,InGameName3:Nickname3]` then it will replace the in game name with the provided nickname in the list. If no nickname is provided then it will print the in game name instead.
 
 ## Commands
