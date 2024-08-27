@@ -1,4 +1,4 @@
-# DiscordMinecraftHelper
+# CraftStatus
 
 This is a small self hosted Discord bot designed to monitor a Minecraft server. It features player count monitoring, server status in the sidebar, and structured logging.
 
