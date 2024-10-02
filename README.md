@@ -17,8 +17,6 @@ services:
   bot:
     container_name: bot
     image: "scidaj57/minecraft-helper"
-    ports:
-      - "8080:8080"
     env_file:
       - "./.env"
 ```
@@ -30,8 +28,6 @@ services:
   bot:
     container_name: bot
     image: "scidaj57/minecraft-helper"
-    ports:
-      - "8080:8080"
     environment:
       BOT_TOKEN:      "XXX0XXXxXxX0XXXxXxXxXXX0Xx"
       GUILD_ID:       "000000000000000000"
